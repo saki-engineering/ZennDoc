@@ -1,9 +1,9 @@
 ---
 title: "Goの言語仕様書精読のススメ & 英語彙集"
-emoji: "📝"
+emoji: "📖"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: [go, 初心者]
-published: false
+published: true
 ---
 # この記事について
 Go言語公式から提供されている[The Go Programming Language Specification](https://golang.org/ref/spec)という文章があります。

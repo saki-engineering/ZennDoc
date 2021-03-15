@@ -1,0 +1,10 @@
+title: "Goのioパッケージ解剖"
+summary: ""
+topics: []
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - 1_intro
+  - 2_file
+  - example2

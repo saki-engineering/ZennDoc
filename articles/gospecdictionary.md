@@ -416,6 +416,9 @@ underlying typeやassignableといった、Go特有の固有概念を辞書順�
 ある値`x`が型`T`にassignableであるということは、「型`T`の変数に代入することができる」という値`x`の性質のことです。
 定義内容については[GoSpec本文](https://golang.org/ref/spec#Assignability)を参照のこと。
 
+yyh-glさん(@yyh_gl)のこちらのスライドにもわかりやすい説明があります。
+https://go-talks.appspot.com/github.com/yyh-gl/slide-decks/210318_gospecreading_assignability.slide#1
+
 ### base type
 何型に対してのポインタなのかというのを、[base type](https://golang.org/ref/spec#Pointer_types)と表現されます。type identityの定義にからむ概念となります。
 例えば、`int`型へのポインタ`*int`型のbase typeは`int`型です。
@@ -494,6 +497,9 @@ type MyString string	// different
 
 conversion(型キャスト)やassignable(代入可能性)を定めるのに型の同一性(type identity)は重要な概念となります。
 詳細な定義に関しては[GoSpec本文](https://golang.org/ref/spec#Type_identity)を参照してください。
+
+また、syumaiさん(@__syumai)が書いた記事もとてもわかりやすいのでここで紹介します。
+https://zenn.dev/syumai/articles/77bc12aca9b654
 
 ### interface
 インターフェース型だけじゃなくて、インターフェースに付属するメソッドセットのことも[interface](https://golang.org/ref/spec#Method_sets)と呼ぶことがあります。

@@ -148,7 +148,7 @@ IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] 
 この`IfStmt`の記述は、「コンパイラがこのEBNFに基づいて構文解析をしています」ということを主張する内容です。つまり「まず`"if"`という文字列があって、次に条件を示す`SimpleStmt`が規定の書き方であって……」ということをコンパイラはやっているのです。なんとなく雰囲気がわかるでしょうか。
 
 :::message
-(2020/3/2追記)
+(2021/3/2追記)
 [コメント](https://zenn.dev/hsaki/articles/gospecdictionary#comment-1bdfebd8713f21)にて厳密には「コンパイラの構文解析が100%EBNF通りには動いていない」との補足をいただきました。
 :::
 
@@ -444,7 +444,7 @@ https://go-talks.appspot.com/github.com/yyh-gl/slide-decks/210318_gospecreading_
 
 - 各種リテラル
 - 定数を示す識別子
-- constant expression(~~`const a = 2`~~(2020/3/2訂正)`1+2`みたいな表現)
+- constant expression(~~`const a = 2`~~(2021/3/2訂正)`1+2`みたいな表現)
 - `len(a)`みたいなある種の組み込み関数
 
 などで表せるもので、リテラルはその中の一つにすぎないということです。
@@ -508,7 +508,11 @@ https://zenn.dev/syumai/articles/77bc12aca9b654
 
 ### numeric
 直訳は数値。
-GoSpec本文中では「`rune`, `int`, `float`, `complex`」の型をまとめてnumeric typeと呼ぶことが多く、何回も出てくるワードです。
+~~GoSpec本文中では「`rune`, `int`, `float`, `complex`」の型をまとめてnumeric typeと呼ぶことが多く、何回も出てくるワードです。~~
+
+(2021/3/21加筆修正)
+GoSpec本文中では「`rune`, `int`, `float`, `complex`, `byte`」の型をまとめてnumeric typeと呼ぶことが多く、何回も出てくるワードです。
+また、「`rune`, `int`, `float`, `complex`」の型の定数もまとめてnumeric constantsと呼ばれます。
 
 ### predeclared identifier
 直訳すると「宣言済みの識別子」。

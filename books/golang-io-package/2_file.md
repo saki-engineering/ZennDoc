@@ -117,6 +117,168 @@ write 26 bytes
 `write write.txt: bad file descriptor`
 :::
 
+# 低レイヤで何が起きているのか
+## ファイルオブジェクト
+`os.File`型の中身は以下のようになっています。
+```go
+type file struct {
+	pfd         poll.FD
+	name        string
+	dirinfo     *dirInfo // nil unless directory being read
+	nonblock    bool     // whether we set nonblocking mode
+	stdoutOrErr bool     // whether this is stdout or stderr
+	appendMode  bool     // whether file is opened for appending
+}
+```
+重要なのは`pfd`フィールドです。
+Linuxカーネルプロセス内部では、openしたファイル1つに対して非負整数1つを対応付けて管理しており、この非負整数のことをfd(ファイルディスクリプタ)と呼んでいます。
+FD型のGoDoc説明にもそう明記されています。
+
+> FD is a file descriptor. The net and os packages use this type as a field of a larger type representing a network connection or OS file.
+> (出典) https://pkg.go.dev/internal/poll#FD
+
+:::message
+オープンしたファイルについてつけているのがfdで、オープンしていなくてもカーネルでは全ファイルを整数番号で把握している。これをinode番号という。
+どちらかというと、fdはファイルそのものの番号というより、読み書きするインターフェースにつけられた番号といった方がいいかも？
+
+これは、同じファイルを開いたらいつも同じfd番号になるとかいうものではない。
+:::
+
+`os.Open()`の中身をこれからみていきます。
+```go
+func Open(name string) (*File, error) {
+	return OpenFile(name, O_RDONLY, 0)
+}
+```
+ちなみに`os.Create()`も引数が違うだけで`OpenFile`を呼んでいるので同じです。
+`os.OpenFile()`をReadOnlyのフラグを立ててやってます。`OpenFile`を見ると
+```go
+func OpenFile(name string, flag int, perm FileMode) (*File, error) {
+	// (略)
+	f, err := openFileNolog(name, flag, perm)
+	// (略)
+}
+```
+`openFileNoLog`を見ると`syscall.Open(引数略)`が呼ばれています。
+https://go.googlesource.com/go/+/go1.16.2/src/os/file_unix.go
+ここでシステムコールopen()を呼んでいるのでカーネル接続
+
+openをみたのでcloseをみてみましょう。
+`f.Close()`メソッドは
+```go
+func (f *File) Close() error {
+	// (略)
+	return f.file.close()
+}
+```
+内部で`file.close()`が呼ばれていて、これは
+```go
+func (file *file) close() error {
+	// (略)
+	if e := file.pfd.Close(); e != nil {
+		// (略)
+	}
+	// (略)
+}
+```
+内部で`pfd.Close()`が呼ばれている。これは
+```go
+func (fd *FD) Close() error {
+	if !fd.fdmu.increfAndClose() {
+		return errClosing(fd.isFile)
+	}
+	// Unblock any I/O.  Once it all unblocks and returns,
+	// so that it cannot be referring to fd.sysfd anymore,
+	// the final decref will close fd.sysfd. This should happen
+	// fairly quickly, since all the I/O is non-blocking, and any
+	// attempts to block in the pollDesc will return errClosing(fd.isFile).
+	fd.pd.evict()
+	// The call to decref will call destroy if there are no other
+	// references.
+	err := fd.decref()
+	// Wait until the descriptor is closed. If this was the only
+	// reference, it is already closed. Only wait if the file has
+	// not been set to blocking mode, as otherwise any current I/O
+	// may be blocking, and that would block the Close.
+	// No need for an atomic read of isBlocking, increfAndClose means
+	// we have exclusive access to fd.
+	if fd.isBlocking == 0 {
+		runtime_Semacquire(&fd.csema)
+	}
+	return err
+}
+```
+https://go.googlesource.com/go/+/go1.16.2/src/internal/poll/fd_unix.go#92
+ここから先がsyscall.Close()にどう繋がるのか？？？
+close-on-execフラグが関連しているらしい、syscall.CloseOnExec()は使っているから
+これによると、exec()したら自動クローズっぽい
+Linux的にはO_CLOEXEC
+
+## Readメソッド
+まずは`os.File`の`Read`メソッドが根本的に何をやっているのか深く掘り下げてみましょう。
+
+`Read`メソッドは、`os.File`型のフィールドの一つ`pfd`のReadメソッドを呼んでいます。
+```go
+// Read()メソッド
+func (f *File) Read(b []byte) (n int, err error) {
+	// (中略)
+	n, e := f.read(b)  // ここで読み込み
+	return n, f.wrapErr("read", e)
+}
+```
+```go
+// f.read(b)の中身
+func (f *File) read(b []byte) (n int, err error) {
+    n, err = f.pfd.Read(b) // ここで読み込み
+    // (中略)
+    return n, err
+}
+```
+
+ここで出てきた`pfd`フィールドは、`internal/poll`パッケージの`FD`型です。(これを略してpfdというフィールド名にしている)
+```go
+type file struct {
+	pfd         poll.FD
+	// (略)
+}
+```
+
+この`os.File`型の`Read`メソッドは、内部的には`poll.FD`型の`Read()`メソッドを呼び出していることになります。
+この`poll.FD`型の`Read()`メソッドは以下のような処理をしています。
+
+1. readLockする()
+2. 読んだものを保存する先の`p []byte`が長さ0じゃないかを確認
+3. ファイルを読み込み専用で開く(fd.pd.prepareReadは`fd_poll_runtime.go`にあって、そこのpd.prepareも同じファイルに実装、)
+4. ストリームだったら(UDPみたいなパケットベースな受信とは対極の)、2^30個のbyteだけ受け取るように制限する
+5. システムコールを呼び出してファイルを読む
+出典:https://go.googlesource.com/go/+/go1.16.2/src/internal/poll/fd_unix.go#142
+
+この5番が重要で、この処理は`ignoringEINTRIO(syscall.Read, fd.Sysfd, p)`と書かれています。この`syscall.Read`という関数が、macのread()システムコールを呼ぶ処理をしていて、ここでGoのカーネル低レイヤが繋がる瞬間です。
+
+:::message
+EINTRは、処理中に割り込み信号(ユーザーによるCtrl+Cなど)がはいったというエラー番号のこと。
+:::
+
+## Writeメソッド
+`os.File`型の`Write()`メソッドのほうも見てみましょう。
+
+```go
+func (f *File) Write(b []byte) (n int, err error) {
+	// (略)
+	n, e := f.write(b)
+    // (略)
+}
+```
+これも、`f.write()`メソッドが呼び出され
+```go
+func (f *File) write(b []byte) (n int, err error) {
+	n, err = f.pfd.Write(b)
+	// (略)
+}
+```
+この中で`f.pfd.Write(b)`メソッドが呼び出され、その中で`ignoringEINTRIO(syscall.Write, fd.Sysfd, p[nn:max])`となりシステムコールwrite()を呼んでいる。
+
+
 # 執筆メモ
 - ファイルってなんで閉じなきゃいけないの？
 - システムコール、低レイヤでは何が起きてるの？

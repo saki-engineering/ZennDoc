@@ -9,4 +9,5 @@ chapters:
   - 2_file
   - 3_netConn
   - 4_io
+  - 5_bufio
   - example2

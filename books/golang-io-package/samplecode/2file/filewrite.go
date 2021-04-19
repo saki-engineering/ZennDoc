@@ -10,7 +10,12 @@ func main() {
 	if err != nil {
 		fmt.Println("cannot open the file")
 	}
-	defer f.Close()
+	defer func(){
+		err := f.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	str := "write this file by Golang!"
 	data := []byte(str)

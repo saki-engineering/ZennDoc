@@ -12,5 +12,3 @@ chapters:
   - 5_bufio
   - 6_fmt
   - 7_bytes
-  - 8_strings
-  - example2

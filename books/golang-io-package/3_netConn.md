@@ -2,17 +2,44 @@
 title: "ネットワーク"
 ---
 # はじめに
-ネットワークについては基本的には`net`パッケージで行います。
+この章ではネットワークについて扱います。
+「ネットワークにI/Oがなんの関係があるの？」と思う方もいるかもしれませんが、「サーバーからデータを受け取る」「クライアントからデータを送る」というのは、言い換えると「コネクションからデータを読み取る・書き込む」ともいえるのです。
+
 `net`パッケージのドキュメントには以下のように記載されています。
 > Package net provides a portable interface for **network I/O**, including TCP/IP, UDP, domain name resolution, and Unix domain sockets.
-出典: https://pkg.go.dev/net
+> (訳)`net`パッケージでは、TCP/IP, UDP, DNS, UNIXドメインソケットを含むネットワークI/Oのインターフェース(移植性あり)を提供します。
+> 出典:[pkg.go.dev - net package](https://pkg.go.dev/net)
 
-# net.Connについて
-クライアント ---- サーバー
-この間のコネクション・パイプを扱うインターフェースがGoだと`net.Conn`インターフェースです。
+ネットワークをI/Oと捉える言葉が明示されているのがわかります。
 
-## サーバー側からのコネクション取得
-listen→Acceptをすることでコネクションを得ることができます。
+ここからは、TCP通信で短い文字列を送る・受け取るためのGoのコードについて解説していきます。
+
+# ネットワークコネクション
+ネットワーク通信においては、「クライアント-サーバー」間を繋ぐコネクションが形成されます。
+このコネクションパイプをGoで扱うインターフェースが`net.Conn`インターフェースです。
+```go
+type Conn interface {
+    Read(b []byte) (n int, err error)
+    Write(b []byte) (n int, err error)
+    Close() error
+    LocalAddr() Addr
+    RemoteAddr() Addr
+    SetDeadline(t time.Time) error
+    SetReadDeadline(t time.Time) error
+    SetWriteDeadline(t time.Time) error
+}
+```
+出典:[pkg.go.dev - net#Conn](https://golang.org/pkg/net/#Conn)
+
+`net.Conn`インターフェースは8つのメソッドセットで構成されており、これを満たす構造体としては`net`パッケージの中だけでも`net.IPConn`, `net.TCPConn`, `net.UDPConn`, `net.UnixConn`があります。
+
+# コネクションを取得
+## サーバー側から取得する
+サーバー側から`net.Conn`インターフェースを取得するためには、以下のような手順を踏みます。
+
+1. `net.Listen(通信プロトコル, アドレス)`関数から`net.Listener`型の変数(`ln`)を得る
+2. `ln`の`Accept()`メソッドを実行する
+
 ```go
 ln, err := net.Listen("tcp", ":8080")
 if err != nil {
@@ -23,23 +50,21 @@ if err != nil {
     fmt.Println("cannot accept", err)
 }
 ```
+`conn`が`net.Conn`インターフェースの変数で、今回の場合、その実体はTCP通信のために使う`net.TCPConn`型構造体です。
 
-## クライアント側からのコネクション取得
-Dialをすることで得られる
+## クライアント側から取得する
+クライアント側から`net.Conn`インターフェースを取得するためには、`net.Dial(通信プロトコル, アドレス)`関数を実行します。
+
 ```go
 conn, err := net.Dial("tcp", "localhost:8080")
 if err != nil {
     fmt.Println("error: ", err)
 }
 ```
+この`conn`も実体は`net.TCPConn`型です。
 
-:::message
-今回得られる`net.Conn`の実態は`net.TCPConn`型です。
-:::
-
-
-# サーバー側からの発信
-サーバー側から、TCPコネクションを使って文字列`"Hello, net pkg!"`を一回送信するコードを書きます。
+# サーバー側からのデータ発信
+サーバー側から、TCPコネクションを使って文字列`"Hello, net pkg!"`を一回送信する処理は、`net.TCPConn`の`Write`メソッドを利用して以下のように実装されます。
 ```go
 // コネクションを得る
 ln, err := net.Listen("tcp", ":8080")
@@ -60,10 +85,11 @@ if err != nil {
     fmt.Println("cannot write", err)
 }
 ```
-`Write`メソッドを使いました。
+`Write`メソッドの挙動は、`os.File`型の`Write`メソッドのものとそう変わりません。
+引数にとった`[]byte`列の内容をコネクションに書き込み、そして何byte書き込めたかの値が第一返り値になります。
 
-# クライアントが受信
-TCPコネクションから、文字列を読み込むコードを書きます。
+# クライアント側がデータ受信
+クライアントがTCPコネクションから、文字列データを受け取るコードを`net.TCPConn`の`Read`メソッドを利用して書きます。
 ```go
 // コネクションを得る
 conn, err := net.Dial("tcp", "localhost:8080")
@@ -72,30 +98,40 @@ if err != nil {
 }
 
 // ここから読み取り
+
 data := make([]byte, 1024)
 count, _ := conn.Read(data)
 fmt.Println(string(data[:count]))
+
+// 出力結果
 // Hello, net pkg!
 ```
-`Read`メソッドを使いました。
+`Read`メソッドの挙動も`os.File`の`Read`メソッドと同じです。
+引数にとった`[]byte`列の中に、コネクションから読み取った内容を入れて、そして何byte読めたかの値が第一返り値になります。
 
-# 低レイヤの話
-## net.TCPConnの正体
-`net.TCPConn`の正体は`net.conn`型です。
+
+# 低レイヤで何が起きているのか
+ここからは、`os.File`型のときにやったのと同様のコードリーディングを行います。
+ネットワークまわりのI/Oの実装では、どのようなシステムコールにつながっているのでしょうか。低レイヤの話に深く潜り込んでいきます。
+
+## ネットワークコネクション(net.TCPConnの正体)
+`net.TCPConn`構造体の正体は、非公開の構造体`net.conn`型です。
 ```go
 type TCPConn struct {
 	conn
 }
 ```
-そして、この`net.conn`型は`netFD`型そのものでした。
+出典:[https://go.googlesource.com/go/+/go1.16.2/src/net/tcpsock.go#85]
+
+そしてこの`net.conn`型の中身は、`netFD`型構造体そのものです。
 ```go
 type conn struct {
 	fd *netFD
 }
 ```
-https://go.googlesource.com/go/+/go1.16.2/src/net/net.go
+出典:[https://go.googlesource.com/go/+/go1.16.2/src/net/net.go#170]
 
-この`netFD`型の定義は以下。
+この`netFD`型は一体何なのでしょうか。これも定義を見てみましょう。
 ```go
 type netFD struct {
 	pfd poll.FD
@@ -108,92 +144,76 @@ type netFD struct {
 	raddr       Addr
 }
 ```
-https://go.googlesource.com/go/+/go1.16.2/src/net/fd_posix.go
+出典:[https://go.googlesource.com/go/+/go1.16.2/src/net/fd_posix.go#17]
 
-つまり、netConnはファイルと同じfdである。ではポート番号とかurlとかはどこにいった？
-(シスこーるsocket()の引数に渡してfdにする)
+前章で出てきた`poll.FD`型の`pfd`フィールドがここでも登場しました。これは一体どういうことでしょうか。
 
-それを見るために、まずはnet.Dialで受信用のconnを得る中身をみてみる。
+実はLinuxの設計思想として "everything-is-a-file philosophy" というものがあります。これは、キーボードからの入力も、プリンターへの出力も、ハードディスクやネットワークからのI/Oもありとあらゆるものを全て「OSのファイルシステム上にあるファイルへのI/Oとして捉える」という思想です。
+今回のようなネットワークからのデータ読み取り・書き込みも、OS内部的には通常のファイルI/Oと変わらないのです。そのため、ネットワークコネクションに対しても、通常ファイルと同様にfdが与えられるのです。
+
+## コネクションオープン
+では、通信するネットワークに対応するfdはどのように決まるのでしょうか。
+また、コネクションに対応したfdが入った`net.Conn`(ここでは`net.TCPConn`型構造体)はどのようにして得られるのでしょうか。
+
+これを理解するためには、
+
+- クライアント側で`net.Dial()`を実行
+- サーバー側で`net.Listen()`→`ln.Accept()`を実行
+
+それぞれにおいて裏で何が起きているのか、コードを読んで深掘りしていきましょう。
+
+### クライアント側からのコネクションオープン
+まずは、クライアント側から`net.Conn`を得るために呼ぶ`net.Dial(通信プロトコル, アドレス)`の中身をみてみます。
+すると、今私たちが欲しい「コネクションに割り当てられたfdをもつ`net.TCPConn`」を作っているのは、実質`net.Dialer`型の`DialContext`メソッドであることがわかります。
+
 ```go
 func Dial(network, address string) (Conn, error) {
 	var d Dialer
 	return d.Dial(network, address)
 }
 ```
-https://pkg.go.dev/net#Dial
-`Dialer`という型の`Dial()`メソッドを呼んでいます。この`Dialer`とは何か？
-```go
-type Dialer struct {
-	Timeout time.Duration
-	Deadline time.Time
-	LocalAddr Addr
-	DualStack bool
-	FallbackDelay time.Duration
-	KeepAlive time.Duration
-	Resolver *Resolver
-	Cancel <-chan struct{}
-	Control func(network, address string, c syscall.RawConn) error
-}
-```
-:::message
-ソケットの構成要素はローカルアドレス(内部PCのプライベートIPに対応)・外部アドレス(通信先のIP)・ポート番号でも同様、の4つの構成要素がある
-:::
-
-この型のメソッド`Dialer.Dial()`をみるとこう。
+出典:[https://go.googlesource.com/go/+/go1.16.3/src/net/dial.go#317]
 ```go
 func (d *Dialer) Dial(network, address string) (Conn, error) {
-	return d.DialContext(context.Background(), network, address)
+	return d.DialContext(context.Background(), network, address) // net.TCPConnを作っているのはここ
 }
 ```
-`DialContext()`がconnの正体か。この中でやっていることは
-1. `Dialer`の`d`と、引数`network, address`から`sysDialer`変数を作る。
-```go
-sd := &sysDialer{
-		Dialer:  *d,
-		network: network,
-		address: address,
-	}
-```
-2. `sysDialer`のメソッドを、`dialParallel()→dialSerial(アドレスリスト)`と呼ぶか`dialSerial(アドレスリスト)`単独で呼ぶかする
-3. `dialSerial`の中で、`sysDialer`のメソッド`dialSingle(アドレス)`を呼ぶ
-4. ローカルアドレスと通信先アドレスを引数に使って、`sysDialer`のメソッド`sd.dialTCP`を呼ぶ
-5. `sysDialer`のメソッド`sd.doDialTCP`を呼ぶ
-6. `sd.doDialTCP`の中で、`internetSocket(ctx, sd.network, laddr, raddr, syscall.SOCK_STREAM, 0, "dial", sd.Dialer.Control)`を呼んでfdを得る
-7. fdから`newTCPConn(fd)`を作って返す(newTCPConnはtcpsock.goの中にある)
-(これらはほとんどnet/dial.goとtcpsock_posix.goの中)
+出典:[https://go.googlesource.com/go/+/go1.16.3/src/net/dial.go#347]
 
-そして、`internetSocket()`の仕組みは以下。(ipsock_posix.goの中)
-1. `socket(ctx, net, family, sotype, proto, ipv6only, laddr, raddr, ctrlFn)`を呼ぶ(sock_posix.goの中)
-2. `socket`の中で`sysSocket(family, sotype, proto)`を呼んで、sysfdを得る(sysSocketはsock_cloexec.goの中)
-    1. `socketFunc(family, sotype|syscall.SOCK_NONBLOCK|syscall.SOCK_CLOEXEC, proto)`を呼んでる
-    2. そして、socketFuncはsyscall.Socketのエイリアス(hook_unix.go)
-3. `newFD(s, family, sotype, net)`を呼んでfdをえようとする(fd_unix.goの中) 
+`net.Dialer`型の`DialContext`メソッドは、「引数として渡されたプロトコル・URL・ポート番号に対応した`net.Conn`を作る」ためのメソッドです。
+> DialContext connects to the address on the named network using the provided context.
+> 出典:[pkg.go.dev - net#Dialer.DialContext](https://pkg.go.dev/net@go1.16.3#Dialer.DialContext)
 
-結局のところ、システムコールsocket()を内部で呼んでfdをえてよしなにしているだけ。
+この`DialContext`メソッドでやっていることは中々複雑なのですが、核としては
+1. `syscall.Socket`経由でシステムコールsocket()を呼んで、URLやポート番号からfdをゲットする
+2. 1で得たfdを`poll.FD`型にする
+3. 2で得た`poll.FD`型の`fd`を使い`newTCPConn(fd)`を実行→これが`TCPConn`になる
 
-さーばーからの発信、`net.Listen`はどうか？
+という流れです。
+結局のところ、システムコールsocket()を内部で呼んで得たfdを`TCPConn`型にラップしている、ということです。
+
+### サーバー側からのコネクションオープン
+サーバー側で`net.Listen()`→`ln.Accept()`という手順を踏んだ場合は何が起こっているのでしょうか。
+`net.Listen()`関数の実装を確認してみます。
 ```go
 func Listen(network, address string) (Listener, error) {
 	var lc ListenConfig
 	return lc.Listen(context.Background(), network, address)
 }
 ```
-ListenCOnfigという型のListenメソッドを呼んでいる。これの中身は以下。
-1. `ListenConfig`と引数`network, address`から`sysListener`変数を作る
-```go
-sl := &sysListener{
-		ListenConfig: *lc,
-		network:      network,
-		address:      address,
-	}
-```
-2. アドレスを引数に使って、`sysListener`のメソッド`sl.listenTCP(ctx, la)`を呼ぶ
-    1. `sl.listenTCP(ctx, la)`(tcpsock_posix.goの中)は、内部で`internetSocket(ctx, sl.network, laddr, nil, syscall.SOCK_STREAM, 0, "listen", sl.ListenConfig.Control)`を呼んでfdを得る
-    2. fdを使って`TCPListener`型(fdとListenConfigが入った構造体)を返り値にする
-3. `sl.listenTCP(ctx, la)`の返り値のlistenerがそのままmain関数のリスナー
+出典:[https://go.googlesource.com/go/+/go1.16.3/src/net/dial.go#704]
 
-そしてここで得たリスナーをAcceptするのはどうなってる？
-`TCPListener`型のメソッド`Accept()`をみてみる。
+`net.ListenConfig`型の`Listen`メソッドを内部で呼んでいます。
+この`Listenメソッド`の中身も中々複雑ですが、核は
+
+1. `syscall.Socket`経由でシステムコールsocket()を呼んで、URLやポート番号からfdをゲットする
+2. 1で得たfdを内部フィールドに含んだ`TCPListener`型を生成し、返り値にする
+
+となっています。
+ここでも、コネクションに対応したfdを得るからくりはsocket()システムコールです。
+
+ですがまだ`net.Listener`が得られただけで、実際に通信に使う`TCPConn`構造体がまだです。
+実は、この「リスナーからコネクションを得る」ためのメソッドが`Accept()`メソッドなのです。その中身をみてみます。
 ```go
 func (l *TCPListener) Accept() (Conn, error) {
 	// (略)
@@ -202,53 +222,37 @@ func (l *TCPListener) Accept() (Conn, error) {
 	return c, nil
 }
 ```
-小文字のメソッド`accept()`を呼んでいる。その中身は以下。(tcpsock_posix.go)
+出典:[https://go.googlesource.com/go/+/go1.16.3/src/net/tcpsock.go#257]
+
+内部では非公開メソッド`accept()`を呼んでいました。その中身は以下のようになっています。
 ```go
 func (ln *TCPListener) accept() (*TCPConn, error) {
+	// リスナー本体からfdを取得
 	fd, err := ln.fd.accept()
-	if err != nil {
-		return nil, err
-	}
+	// (略)
+
+	// fdからTCPConnを作成
 	tc := newTCPConn(fd)
-	if ln.lc.KeepAlive >= 0 {
-		setKeepAlive(fd, true)
-		ka := ln.lc.KeepAlive
-		if ln.lc.KeepAlive == 0 {
-			ka = defaultTCPKeepAlive
-		}
-		setKeepAlivePeriod(fd, ka)
-	}
+	// (略)
+
 	return tc, nil
 }
 ```
-要するに、listenerからfdを取得して、それを使って新規の`TCPConn`を作っているだけ。
+出典:[https://go.googlesource.com/go/+/go1.16.3/src/net/tcpsock_posix.go#138]
+
+要するに、「リスナーからコネクションを得る」=「リスナーからfdを取り出して、それを`TCPConn`にラップする」ということなのです。
 
 
-## conn.Write()の処理
-今回のconnは`net.TCPConn`型なので、これの`Write()`メソッドの中身をみてみます。
-```go
-func (c *conn) Write(b []byte) (int, error) {
-	// (略)
-	n, err := c.fd.Write(b)
-	// (略)
-}
-```
+## Readメソッド
+`net.TCPConn`型の`Read()`の中身を掘り下げます。
+
+先述した通り、`net.TCPConn`型の実体は非公開構造体`conn`です。そのため、`conn`型の`Read`メソッドがそのまま`net.TCPConn`型の`Read`メソッドとして機能します。
+
 :::message
-TCPConn型にはconn型しか埋め込まれていないので、`func (c *TCPConn) Write(b []byte) (int, error)`が定義されていなくても、`func (c *conn) Write(b []byte) (int, error)`がそのままTCPConn型のWriteメソッドとして使用可能です。
-(メソッド委譲)
+`(c *TCPConn) Read`が定義されていなくても、内部フィールド構造体の`(c *conn) Read`がそのまま`TCPConn`型のメソッドとして機能する挙動のことをメソッド委譲といいます。
 :::
 
-`netFD`型の`Write()`メソッドが呼ばれています。この中身は
-```go
-func (fd *netFD) Write(p []byte) (nn int, err error) {
-	nn, err = fd.pfd.Write(p)
-	// (略)
-}
-```
-`poll.FD`型の`Write`メソッドに繋がる。ここからはファイルの話と合流
-
-## conn.Read()の処理
-`net.TCPConn`型の`Read()`の中身は
+その`conn`型の`Read`メソッドは、内部ではフィールド`fd`(`netFD`型)の`Read`メソッドを呼んでいます。
 ```go
 func (c *conn) Read(b []byte) (int, error) {
 	// (略)
@@ -256,18 +260,44 @@ func (c *conn) Read(b []byte) (int, error) {
 	// (略)
 }
 ```
-`netFD`型の`read()`メソッドが呼ばれています。この中身は
+出典:[https://go.googlesource.com/go/+/go1.16.2/src/net/net.go#179]
+
+`netFD`型の`Read()`メソッドの中身では、`pfd`フィールド(`poll.FD`型)の`Read`メソッドを呼んでいます。
 ```go
 func (fd *netFD) Read(p []byte) (n int, err error) {
 	n, err = fd.pfd.Read(p)
 	// (略)
 }
 ```
-https://go.googlesource.com/go/+/go1.16.2/src/net/fd_posix.go
-`poll.FD`型の`Read`メソッドに繋がり、ファイルの話と合流します。
+出典:[https://go.googlesource.com/go/+/go1.16.2/src/net/fd_posix.go#54]
+
+この`poll.FD`型の`Read`メソッドというのは、前章のファイルI/Oでも出てきたものです。ここから先は通常ファイルのI/Oと同じく、対応したfdのファイルの中身を読み込むためのシステムコール`syscall.Read`につながります。
+"everything-is-a-file"思想の名の通り、ネットワークコネクションからのデータ読み取りも、OSの世界においてはファイルの読み取りと変わらず`read`システムコールで処理されるのです。
+
+`net.TCPConn`型の`Read`メソッドの処理手順をまとめます。
+1. `net.conn`型の`Read`メソッドを呼ぶ
+2. 1の中で`net.netFD`型の`Read`メソッドを呼ぶ
+3. 2の中で`poll.FD`型の`Read`メソッドを呼ぶ
+4. 3の中で`syscall.Read`メソッドを呼ぶ
+5. OSカーネルのシステムコールで読み込み処理
+
+## Writeメソッド
+`net.TCPConn`型の`Write()`メソッドのほうも`Read`メソッドと同様の流れで実装されています。
+1. `net.conn`型の`Write`メソッドを呼ぶ
+2. 1の中で`net.netFD`型の`Write`メソッドを呼ぶ
+3. 2の中で`poll.FD`型の`Write`メソッドを呼ぶ
+4. 3の中で`syscall.Write`メソッドを呼ぶ
+5. OSカーネルのシステムコールで書き込み処理
+
+
+
+
+
 
 # 執筆メモ
 このずがいい
 https://ascii.jp/elem/000/001/276/1276572/
 
 ネットワークのソケットは、ネットワーク通信に用いるファイル・ディスクリプタ（file descriptor）です。
+
+https://qiita.com/tutuz/items/e875d8ea3c31450195a7

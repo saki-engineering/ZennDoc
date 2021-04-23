@@ -51,6 +51,7 @@ if err != nil {
 }
 ```
 `conn`が`net.Conn`インターフェースの変数で、今回の場合、その実体はTCP通信のために使う`net.TCPConn`型構造体です。
+![](https://storage.googleapis.com/zenn-user-upload/o27hayivyrxb3f1sice2v688pifa =250x)
 
 ## クライアント側から取得する
 クライアント側から`net.Conn`インターフェースを取得するためには、`net.Dial(通信プロトコル, アドレス)`関数を実行します。
@@ -62,6 +63,8 @@ if err != nil {
 }
 ```
 この`conn`も実体は`net.TCPConn`型です。
+![](https://storage.googleapis.com/zenn-user-upload/qpd98ckv0y2foe9uc312hzx9y591 =280x)
+
 
 # サーバー側からのデータ発信
 サーバー側から、TCPコネクションを使って文字列`"Hello, net pkg!"`を一回送信する処理は、`net.TCPConn`の`Write`メソッドを利用して以下のように実装されます。
@@ -148,8 +151,9 @@ type netFD struct {
 
 前章で出てきた`poll.FD`型の`pfd`フィールドがここでも登場しました。これは一体どういうことでしょうか。
 
-実はLinuxの設計思想として "everything-is-a-file philosophy" というものがあります。これは、キーボードからの入力も、プリンターへの出力も、ハードディスクやネットワークからのI/Oもありとあらゆるものを全て「OSのファイルシステム上にあるファイルへのI/Oとして捉える」という思想です。
+実はLinuxの設計思想として **"everything-is-a-file philosophy"** というものがあります。これは、キーボードからの入力も、プリンターへの出力も、ハードディスクやネットワークからのI/Oもありとあらゆるものを全て「**OSのファイルシステム上にあるファイルへのI/Oとして捉える**」という思想です。
 今回のようなネットワークからのデータ読み取り・書き込みも、OS内部的には通常のファイルI/Oと変わらないのです。そのため、ネットワークコネクションに対しても、通常ファイルと同様にfdが与えられるのです。
+![](https://storage.googleapis.com/zenn-user-upload/av0ff3br57ap2iygje9p6qf1hnzw)
 
 ## コネクションオープン
 では、通信するネットワークに対応するfdはどのように決まるのでしょうか。
@@ -190,6 +194,7 @@ func (d *Dialer) Dial(network, address string) (Conn, error) {
 3. 2で得た`poll.FD`型の`fd`を使い`newTCPConn(fd)`を実行→これが`TCPConn`になる
 
 という流れです。
+![](https://storage.googleapis.com/zenn-user-upload/36rx6fx5dw4qd3o6lriieeji4ur2 =320x)
 結局のところ、システムコールsocket()を内部で呼んで得たfdを`TCPConn`型にラップしている、ということです。
 
 ### サーバー側からのコネクションオープン
@@ -242,6 +247,8 @@ func (ln *TCPListener) accept() (*TCPConn, error) {
 
 要するに、「リスナーからコネクションを得る」=「リスナーからfdを取り出して、それを`TCPConn`にラップする」ということなのです。
 
+![](https://storage.googleapis.com/zenn-user-upload/drawttp5tipfm1qkwadcsiyx6j5w =300x)
+
 
 ## Readメソッド
 `net.TCPConn`型の`Read()`の中身を掘り下げます。
@@ -289,15 +296,15 @@ func (fd *netFD) Read(p []byte) (n int, err error) {
 4. 3の中で`syscall.Write`メソッドを呼ぶ
 5. OSカーネルのシステムコールで書き込み処理
 
+![](https://storage.googleapis.com/zenn-user-upload/pt2qg55vm9759qmjuif9mc88mm0u)
 
+# まとめ
+前章・本章とファイル・ネットワークのI/Oについて取り上げました。
+しかし、I/Oする対象こそ違えど、内部的な構造は両方とも
+- fdがある(=ファイルへのI/Oと見れる)
+- `Read()`メソッド、`Write()`メソッドのシグネチャが同じ
+- 裏でシステムコールread()/write()を呼んでいる
 
+等々、似ているところがあります。
 
-
-
-# 執筆メモ
-このずがいい
-https://ascii.jp/elem/000/001/276/1276572/
-
-ネットワークのソケットは、ネットワーク通信に用いるファイル・ディスクリプタ（file descriptor）です。
-
-https://qiita.com/tutuz/items/e875d8ea3c31450195a7
+次章では、これらI/Oをまとめてひっくるめて扱う抽象化の手段を紹介します。

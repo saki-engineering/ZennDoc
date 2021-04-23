@@ -20,6 +20,11 @@ func NewReader(rd io.Reader) *Reader
 ```
 出典:[pkg.go.dev - bufio#NewReader](https://pkg.go.dev/bufio#NewReader)
 
+:::message
+`bufio.Reader`型を作るための元になるリーダーが、具体型ではなく`io.Reader`であることで、「ネットワークでもファイルでもその他のI/Oであっても、buffered I/Oにできる」のです。
+ここからも「`io`パッケージによるI/O抽象化」のメリットを感じることができます。
+:::
+
 作った`bufio.Reader`は、普通の`io.Reader`とは何が違うのでしょうか。中身を見てみましょう。
 ```go
 type Reader struct {
@@ -48,8 +53,6 @@ type Reader struct {
 
 このように、ある特定条件下においては、「読み込んだ中身を内部バッファ`buf`に貯める」という動作が行われます。
 そのため、「もう変数`p`に内容を書き込み済みのデータも、`bufio.Reader`の内部バッファには残っている」状態になります。
-
-こうなると何が嬉しいかというと、「まだプログラム中の変数に残っているデータのメモリは、キャッシュメモリに残される」ので、アクセスが早くなるということです。これがユーザースペースでバッファリングをすることのメリットです。
 
 ## bufio.Writer型の特徴
 `bufio.Reader`があるなら`bufio.Writer`も存在します。
@@ -90,6 +93,139 @@ type Writer struct {
 そのため、「1byteの書き込みを4096回」と「4096byte(=4KB)の書き込みを1回」だったら後者の方が早いのです。
 
 ユーザースペースでバッファリングすることで、中途半端な長さの書き込みを全て「ブロック単位の長さの書き込み」に整形することができるので、処理速度をあげることができるのです。
+
+## ベンチマークによる実行時間比較
+本当に`bufio`パッケージを使うことでI/Oが早くなっているのでしょうか。
+
+> Measure. Don't tune for speed until you've measured, and even then don't unless one part of the code overwhelms the rest.
+> (よく言われる意訳) 推測するな、計測しろ
+> 出典:[Rob Pike's 5 Rules of Programming](http://users.ece.utexas.edu/~adnan/pike.html)^[Go言語の父と呼ばれている人です]
+
+こんな言葉もあることですし、それに従い実際にベンチマークをとって検証してみましょう。
+
+検証環境は以下のものを使用しました。
+```
+goos: darwin
+goarch: amd64
+cpu: Intel(R) Core(TM) i5-8279U CPU @ 2.40GHz
+```
+### Readメソッド
+まずは`io.Reader`と`bufio.Reader`型の`Read`メソッドを検証します。
+
+以下のような関数を用意しました。
+```go
+// サイズがFsizeのファイルをnbyteごと読む関数
+func ReadOS(r io.Reader, n int) {
+	data := make([]byte, n)
+
+	t := Fsize / n
+	for i := 0; i < t; i++ {
+		r.Read(data)
+	}
+}
+```
+そして、ベンチマーク用のテストコードを以下のように書きました。
+```go
+// ただのio用
+func BenchmarkReadX(b *testing.B) {
+	f, _ := os.Open("read.txt")
+	defer f.Close()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ReadOS(f, X)
+	}
+}
+
+// bufio用
+func BenchmarkBReadX(b *testing.B) {
+	f, _ := os.Open("read.txt")
+	defer f.Close()
+	bf := bufio.NewReader(f)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ReadOS(bf, X)
+	}
+}
+```
+ベンチマーク関数の名前`BenchmarkYReadX()`の名前は
+- `Y`: なしなら普通の`io`, `B`なら`bufio`での検証
+- `X`: `X`byteごとにファイルを読み込んでいく
+
+です。
+
+`go test -bench .`でのテスト結果は、以下のようになりました。
+```
+BenchmarkWrite1-8                    117          10157577 ns/op
+BenchmarkWrite32-8                  3280            330840 ns/op
+BenchmarkWrite256-8                27649             49118 ns/op
+BenchmarkWrite4096-8              206610              6637 ns/op
+
+BenchmarkBWrite1-8                 39537             29841 ns/op
+BenchmarkBWrite32-8               232269              5700 ns/op
+BenchmarkBWrite256-8              255998              5996 ns/op
+BenchmarkBWrite4096-8             193617              7128 ns/op
+```
+1byteごと読み込んでいる処理の場合、bufio使用なし/ありでそれぞれ10157577ns/29841nsと、約340倍ものパフォーマンスの差が出る結果となりました。
+読み込み単位のバイト数を増やすごとにパフォーマンス差はなくなっていきますが、それを抜きにしてもユーザースペースでのバッファリングの威力がよくわかる結果です。
+
+### Writeメソッド
+今度は`io.Reader`と`bufio.Reader`型の`Write`メソッドを検証します。
+
+検証用として以下のような関数を用意しました。
+```go
+// サイズBsize分のデータを、nbyteごとに区切って書き込む
+func WriteOS(w io.Writer, n int) {
+	data := []byte(strings.Repeat("a", n))
+
+	t := Bsize / n
+	for i := 0; i < t; i++ {
+		w.Write(data)
+	}
+}
+```
+そして、ベンチマーク用のテストコードを以下のように書きました。
+```go
+// ただのio用
+func BenchmarkWriteX(b *testing.B) {
+	f, _ := os.Create("write.txt")
+	defer f.Close()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		WriteOS(f, X)
+	}
+}
+
+// bufio用
+func BenchmarkBWriteX(b *testing.B) {
+	f, _ := os.Create("write6.txt")
+	defer f.Close()
+	bf := bufio.NewWriter(f)
+
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		WriteOS(bf, X)
+	}
+	bf.Flush()
+}
+```
+`go test -bench .`でのテスト結果は、以下のようになりました。
+```
+BenchmarkRead1-8               1        1575492668 ns/op
+BenchmarkRead32-8             21          51526989 ns/op
+BenchmarkRead256-8           181           5954220 ns/op
+BenchmarkRead4096-8         3544            338707 ns/op
+
+BenchmarkBRead1-8             79          14302113 ns/op
+BenchmarkBRead32-8          1071          39197576 ns/op
+BenchmarkBRead256-8         1306           5104346 ns/op
+BenchmarkBRead4096-8        3427            373660 ns/op
+```
+こちらでも、1byteごと書き込んでいる場合、bufioの有無で110倍ものパフォーマンス差が生まれる結果となりました。
+
 # bufio.Scanner
 `bufio`パッケージには、`Reader`とは別に`bufio.Scanner`という読み込みのための構造体がもう一つ存在します。
 `bufio.Reader()`での読み込みが「指定した長さのバイト列ごと」なのに対して、これは「トークンごとの読み込み」をできるようにすることで利便性を向上させたものです。
@@ -214,12 +350,37 @@ dog
 */
 ```
 
+## (余談)Scannerを使わなきゃ困っちゃう場面
+実はこの`bufio.Scanner`、Goで競プロをやっている方なら馴染みがある概念ではないでしょうか。
 
+### fmt.ScanでTLEが出ちゃう問題
+競技プログラミングの問題において、大量のデータの入力が必要になる場合が存在します。
+例えば、この[AtCoder Beginner Contest 144 - E問題](https://atcoder.jp/contests/abc144/tasks/abc144_e)は、`2*N+2`個ものの数字が以下のように与えられます。
+```
+N K
+A1 A2 ... AN
+F1 F2 ... FN
+```
+この問題の場合、`N`の最大値は`2*10^5`なので結構な数の入力があることになります。
+そのため、`fmt.Scan`を使うとTLE(時間切れによる不正解)判定が出てしまいます。
+```go
+// TLEになったコードの断片
+var N, K int
+fmt.Scan(&N, &K)
+ 
+A := make([]int, N)
+for i := 0; i < N; i++ {
+	fmt.Scan(&A[i])
+}
+F := make([]int, N)
+for i := 0; i < N; i++ {
+	fmt.Scan(&F[i])
+}
+```
 
-
-# 参考
-
-競プロではよく出てくるやつ。
+### 解決策
+これの解決策が`bufio.Scanner`の使用です。
+以下のようなコードはGoで競プロやるかたにとってはテンプレなのではないでしょうか。
 ```go
 var sc = bufio.NewScanner(os.Stdin)
 
@@ -237,27 +398,22 @@ func main() {
 	// (以下略)
 }
 ```
+これをファイル冒頭に入れておくことで、この問題での入力処理は以下のように書き換えられます。
+```go
+N, K := scanInt(), scanInt()
+ 
+A, F := make([]int, N), make([]int, N)
+for i := 0; i < N; i++ {
+	A[i] = scanInt()
+}
 
-このGopherConの動画にbufferの大切さが描かれている。
-https://www.youtube.com/watch?v=nok0aYiGiYA
-(27:05までみた)
-https://about.sourcegraph.com/go/gophercon-2019-two-go-programs-three-different-profiling-techniques-in-50-minutes/
-syscall.syscallは重くて遅い(8:43)
-bufferに渡すバイト列を再利用すればメモリアロケーションがなくなって早くなる(18分付近)
+for i := 0; i < N; i++ {
+	F[i] = scanInt()
+}
+```
+筆者はこの修正を施すことで無事にAC(正解)を通しました。
 
-ベンチマークとりたい
+# まとめ
+以上、`bufio`パッケージによるbuffered I/Oについて掘り下げました。
 
-
-1. カーソルr, wが両方0のとき
-	1. 読み込み要求(引数p)が内部バッファよりも大きい場合、readした結果を直接pにいれてreturn
-	2. 内部バッファが読み込み要求(引数p)よりも大きい場合、readした結果を内部バッファに入れて、カーソルwを動かす
-2. 内部バッファの中身をpにコピー
-3. カーソルrを動かす
-要するに、カーソルrはbufの中でどこまで引数pに移したか、wはbufの中でどこまで読み込んだ値が入っているのか
-
-https://ja.wikipedia.org/wiki/Malloc
-
-`n`フィールドは、`buf`が今どこまで使われて埋まっちゃってるのかといことを表す。
-
-このwriteの動きはこのサイトがわかりやすい
-https://www.educative.io/edpresso/how-to-read-and-write-with-golang-bufio
+次章では、最後の競プロでも出てきた`fmt`での標準入力・出力について掘り下げます。

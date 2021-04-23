@@ -371,59 +371,31 @@ func (f *File) read(b []byte) (n int, err error) {
 4. 3の中で`syscall.Write`メソッドを呼ぶ
 5. OSカーネルのシステムコールで書き込み処理
 
+![](https://storage.googleapis.com/zenn-user-upload/rnaugoc5gva6ra9kkxzexjjgno2o)
 
-# 執筆メモ
-- ファイルってなんで閉じなきゃいけないの？
-- システムコール、低レイヤでは何が起きてるの？
+## (おまけ)ファイルクローズ
+ここまで見てきたファイル操作の裏には、どれもシステムコールがありました。
+なので「ファイルの`Close()`メソッドも、裏ではclose()のシステムコールを呼んでいるんでしょ？」と推測する方もいるかもしれません。
 
-
-openをみたのでcloseをみてみましょう。
-`f.Close()`メソッドは
+しかし実は、`os.File`型の`Close()`メソッドを掘り下げても、closeシステムコールに繋がる`syscall.Close`は出てきません。
+これはなぜかというと、ファイルオープンの時点で「ファイルオープンしたプロセスが終了したら、自動的にファイルを閉じてください」という`O_CLOEXEC`フラグを立てているからなのです。
 ```go
-func (f *File) Close() error {
+// (再掲)
+func openFileNolog(name string, flag int, perm FileMode) (*File, error) {
 	// (略)
-	return f.file.close()
-}
-```
-内部で`file.close()`が呼ばれていて、これは
-```go
-func (file *file) close() error {
-	// (略)
-	if e := file.pfd.Close(); e != nil {
-		// (略)
-	}
+	// 第二引数が「フラグ」
+	r, e = syscall.Open(name, flag|syscall.O_CLOEXEC, syscallMode(perm))
 	// (略)
 }
 ```
-内部で`pfd.Close()`が呼ばれている。これは
-```go
-func (fd *FD) Close() error {
-	if !fd.fdmu.increfAndClose() {
-		return errClosing(fd.isFile)
-	}
-	// Unblock any I/O.  Once it all unblocks and returns,
-	// so that it cannot be referring to fd.sysfd anymore,
-	// the final decref will close fd.sysfd. This should happen
-	// fairly quickly, since all the I/O is non-blocking, and any
-	// attempts to block in the pollDesc will return errClosing(fd.isFile).
-	fd.pd.evict()
-	// The call to decref will call destroy if there are no other
-	// references.
-	err := fd.decref()
-	// Wait until the descriptor is closed. If this was the only
-	// reference, it is already closed. Only wait if the file has
-	// not been set to blocking mode, as otherwise any current I/O
-	// may be blocking, and that would block the Close.
-	// No need for an atomic read of isBlocking, increfAndClose means
-	// we have exclusive access to fd.
-	if fd.isBlocking == 0 {
-		runtime_Semacquire(&fd.csema)
-	}
-	return err
-}
-```
-https://go.googlesource.com/go/+/go1.16.2/src/internal/poll/fd_unix.go#92
-ここから先がsyscall.Close()にどう繋がるのか？？？
-close-on-execフラグが関連しているらしい、syscall.CloseOnExec()は使っているから
-これによると、exec()したら自動クローズっぽい
-Linux的にはO_CLOEXEC
+そのため、`Close()`メソッドがやっているのは
+- エラー処理
+- 対応する`os.File`型を使えなくする後始末
+
+という側面が強いです。
+
+# まとめ
+ここまでは、ファイルの読み書きについて取り上げました。
+ただし、「I/O」というのはファイルだけのものではありません。
+
+次章では、「ファイルではないI/O」について扱いたいと思います。

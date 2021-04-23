@@ -1,15 +1,15 @@
-title: "Goのioパッケージ解剖"
-summary: ""
-topics: []
+title: "Goから学ぶI/O"
+summary: "GoにはI/Oに関わるパッケージが数多く存在します。io, os, bufio, fmtなどなど……。これらの立ち位置や、I/O実行の裏で何が起こっているのか本当に理解していますか？この本では、この問への答えをまとめました。"
+topics: ["go"]
 published: false
 price: 0 # 有料の場合200〜5000
 # 本に含めるチャプターを順番に並べましょう
 chapters:
-  - 1_intro
-  - 2_file
-  - 3_netConn
-  - 4_io
-  - 5_bufio
-  - 6_fmt
-  - 7_bytes
-  - 8_appendix
+  - intro
+  - file
+  - netConn
+  - io
+  - bufio
+  - fmt
+  - bytestring
+  - appendix

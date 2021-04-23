@@ -1,0 +1,4 @@
+apple
+bird flies.
+cat is sleeping.
+dog

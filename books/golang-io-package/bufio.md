@@ -157,18 +157,17 @@ func BenchmarkBReadX(b *testing.B) {
 
 `go test -bench .`でのテスト結果は、以下のようになりました。
 ```
-BenchmarkWrite1-8                    117          10157577 ns/op
-BenchmarkWrite32-8                  3280            330840 ns/op
-BenchmarkWrite256-8                27649             49118 ns/op
-BenchmarkWrite4096-8              206610              6637 ns/op
+BenchmarkRead1-8               1        1575492668 ns/op
+BenchmarkRead32-8             21          51526989 ns/op
+BenchmarkRead256-8           181           5954220 ns/op
+BenchmarkRead4096-8         3544            338707 ns/op
 
-BenchmarkBWrite1-8                 39537             29841 ns/op
-BenchmarkBWrite32-8               232269              5700 ns/op
-BenchmarkBWrite256-8              255998              5996 ns/op
-BenchmarkBWrite4096-8             193617              7128 ns/op
+BenchmarkBRead1-8             79          14302113 ns/op
+BenchmarkBRead32-8          1071          39197576 ns/op
+BenchmarkBRead256-8         1306           5104346 ns/op
+BenchmarkBRead4096-8        3427            373660 ns/op
 ```
-1byteごと読み込んでいる処理の場合、bufio使用なし/ありでそれぞれ10157577ns/29841nsと、約340倍ものパフォーマンスの差が出る結果となりました。
-読み込み単位のバイト数を増やすごとにパフォーマンス差はなくなっていきますが、それを抜きにしてもユーザースペースでのバッファリングの威力がよくわかる結果です。
+1byteごと書き込んでいる場合、bufioの有無で110倍ものパフォーマンス差が生まれる結果となりました。
 
 ### Writeメソッド
 今度は`io.Reader`と`bufio.Reader`型の`Write`メソッドを検証します。
@@ -214,17 +213,18 @@ func BenchmarkBWriteX(b *testing.B) {
 ```
 `go test -bench .`でのテスト結果は、以下のようになりました。
 ```
-BenchmarkRead1-8               1        1575492668 ns/op
-BenchmarkRead32-8             21          51526989 ns/op
-BenchmarkRead256-8           181           5954220 ns/op
-BenchmarkRead4096-8         3544            338707 ns/op
+BenchmarkWrite1-8                    117          10157577 ns/op
+BenchmarkWrite32-8                  3280            330840 ns/op
+BenchmarkWrite256-8                27649             49118 ns/op
+BenchmarkWrite4096-8              206610              6637 ns/op
 
-BenchmarkBRead1-8             79          14302113 ns/op
-BenchmarkBRead32-8          1071          39197576 ns/op
-BenchmarkBRead256-8         1306           5104346 ns/op
-BenchmarkBRead4096-8        3427            373660 ns/op
+BenchmarkBWrite1-8                 39537             29841 ns/op
+BenchmarkBWrite32-8               232269              5700 ns/op
+BenchmarkBWrite256-8              255998              5996 ns/op
+BenchmarkBWrite4096-8             193617              7128 ns/op
 ```
-こちらでも、1byteごと書き込んでいる場合、bufioの有無で110倍ものパフォーマンス差が生まれる結果となりました。
+1byteごと読み込んでいる処理の場合、bufio使用なし/ありでそれぞれ10157577ns/29841nsと、約340倍ものパフォーマンスの差が出る結果となりました。
+読み込み単位のバイト数を増やすごとにパフォーマンス差はなくなっていきますが、それを抜きにしてもユーザースペースでのバッファリングの威力がよくわかる結果です。
 
 # bufio.Scanner
 `bufio`パッケージには、`Reader`とは別に`bufio.Scanner`という読み込みのための構造体がもう一つ存在します。

@@ -506,6 +506,11 @@ https://zenn.dev/syumai/articles/77bc12aca9b654
 
 > (例文) An interface type specifies a method set called its **interface**.
 
+:::message
+メソッドセット・インターフェースについての詳しい説明は、task4233さん(@task4223)によるこちらの資料があります。
+https://speakerdeck.com/task4233/gokuizudexue-bumesotudosetutohttps://speakerdeck.com/task4233/gokuizudexue-bumesotudosetuto
+:::
+
 ### numeric
 直訳は数値。
 ~~GoSpec本文中では「`rune`, `int`, `float`, `complex`」の型をまとめてnumeric typeと呼ぶことが多く、何回も出てくるワードです。~~
@@ -589,7 +594,8 @@ const zero = 0.0         // untyped floating-point constant
 ```
 そのため、定数`zero`の型の解釈が必要になった場合は、default typeが割り当てられることになります。
 
-
+DQNEO(@DQNEO)さんがまとめたこちらのスライドもわかりやすいです。
+https://speakerdeck.com/dqneo/go-specification-untyped-constants
 
 
 ## プログラム全般について

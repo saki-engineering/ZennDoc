@@ -59,7 +59,7 @@ type g struct {
 
 ## M
 Goランタイムの文脈において、OSカーネルのマシンスレッドを**M**と表現します。
-runtimeコード内でこれに対応する構造体は`m`です。
+`runtime`コード内でこれに対応する構造体は`m`です。
 ```go
 type m struct {
 	// (一部抜粋)
@@ -89,7 +89,7 @@ Windowsの場合は[`os_windows.go`](https://github.com/golang/go/blob/e4615ad74
 > 
 > 出典:[runtime/HACKING.md](https://github.com/golang/go/blob/7307e86afda3c5c7f6158d2469c39606fd1dba65/src/runtime/HACKING.md)
 
-runtimeパッケージコード内でこれに対応するのが`p`構造体です。
+`runtime`パッケージコード内でこれに対応するのが`p`構造体です。
 ```go
 type p struct {
 	// (一部抜粋)
@@ -109,7 +109,7 @@ type p struct {
 ランタイム上で一度にPを最大いくつ起動できるかは、環境変数`GOMAXPROCS`で定義されています。
 
 ## sched
-runtimeパッケージ内のグローバル変数に`sched`というものがあります。
+`runtime`パッケージ内のグローバル変数に`sched`というものがあります。
 ```go
 var (
 	// (一部抜粋)
@@ -300,7 +300,7 @@ func goschedImpl(gp *g) {
 
 # Goのスケジューラ
 スケジューラの役目としては、「実行するコードであるG、実行する場所であるM、それを実行する権利とリソースであるPをうまく組み合わせる」ということです。
-runtimeパッケージ内の`HACKING.md`ファイルには、以下のように記述されています。
+`runtime`パッケージ内の`HACKING.md`ファイルには、以下のように記述されています。
 
 > The scheduler's job is to match up a G (the code to execute), an M (where to execute it), and a P (the rights and resources to execute it). 
 > When an M stops executing user Go code, for example by entering a system call, it returns its P to the idle P pool. 
@@ -328,7 +328,7 @@ OSスレッドの切り替えや実行のタイミングは、それぞれの実
 スケジューラの仕事が「実行するコードであるG、実行する場所であるM、それを実行する権利とリソースであるPをうまく組み合わせる」ことであることは前述した通りです。
 これは具体的にどういうことなのかというと、「実行可能なGを見つけたら、それを実行するように取り計らう」ということです。
 
-これを実際に実装しているのが、runtimeパッケージ内の`schedule`関数です。
+これを実際に実装しているのが、`runtime`パッケージ内の`schedule`関数です。
 ```go
 runtime.schedule() {
     // only 1/61 of the time, check the global runnable queue for a G.

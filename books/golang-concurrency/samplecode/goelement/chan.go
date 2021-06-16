@@ -26,4 +26,6 @@ func main() {
 	num := <-c
 
 	fmt.Printf("Today's your lucky number is %d!\n", num)
+
+	close(c)
 }

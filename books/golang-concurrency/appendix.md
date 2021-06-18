@@ -97,6 +97,11 @@ https://morsmachine.dk/netpoller
 上の記事と同じ人が書いたnetpollerの記事です。
 "Golang netpoller"と検索したら割と上位に出てくる。
 
+### rakyll.org: Go's work-stealing scheduler
+https://rakyll.org/scheduler/
+
+GoのスケジューラのWork-Stealingの挙動について、図を用いて解説されています。
+
 ### A Journey With Go
 https://medium.com/a-journey-with-go/tagged/goroutines
 

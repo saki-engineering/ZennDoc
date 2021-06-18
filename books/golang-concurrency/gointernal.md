@@ -43,6 +43,7 @@ type g struct {
 	stackguard0  uintptr	// 該当のGをプリエンプトしていいかのフラグをここに立てる
 	m            *m		// 該当のGを実行しているM
 	sched        gobuf	// Gに割り当てられたユーザースタック
+	atomicstatus uint32	// running、waitingといったGの状態
 	preempt      bool	// 該当のGをプリエンプトしていいかのフラグをここに立てる
 	waiting      *sudog	// 該当のGを元に作られたsudogの連結リスト(sudogについては次章)
 }
@@ -54,6 +55,20 @@ type g struct {
 
 そのうちの一つがユーザースタックです。
 ゴールーチンにはあらかじめユーザースタック(`sched`フィールドに対応)が割り当てられており、初期値2048byteから動的に増減します。
+
+Gの状態を示す`atomicstatus`フィールドに入りうる値については、`runtime/proc.go`にまとめられています。
+```go
+const (
+	// G status
+	_Gidle = iota // 0
+	_Grunnable // 1
+	_Grunning // 2
+	_Gsyscall // 3
+	_Gwaiting // 4
+	// (以下略)
+)
+```
+出典:[runtime/proc.go](https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L13-L104)
 
 ## M
 Goランタイムの文脈において、OSカーネルのマシンスレッドを**M**と表現します。
@@ -105,6 +120,19 @@ type p struct {
 出典:[runtime/runtime2.go](https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L604-L749)
 
 ランタイム上で一度にPを最大いくつ起動できるかは、環境変数`GOMAXPROCS`で定義されています。
+
+また、Pの状態について示す`status`フィールドに入る値は、`runtime.proc.go`内に定義があります。
+```go
+const (
+	// P status
+	_Pidle = iota
+	_Prunning
+	_Psyscall
+	_Pgcstop
+	_Pdead
+)
+```
+出典:[runtime/proc.go](https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L106-L154)
 
 ## sched
 `runtime`パッケージ内のグローバル変数に`sched`というものがあります。

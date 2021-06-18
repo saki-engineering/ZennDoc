@@ -19,7 +19,10 @@ title: "Goで並行処理(応用編)"
 > **Do not communicate by sharing memory; instead, share memory by communicating.**
 > 出典:[Effective Go](https://golang.org/doc/effective_go#sharing)
 
-Goのチャネルはもともとゴールーチンセーフになるように設計されています。
+Goのチャネルはもともとゴールーチンセーフ[^1]になるように設計されています。
+
+[^1]:異なるゴールーチン間での排他処理を意識しなくてよい、ということです。
+
 そのため「実装が難しい危険なメモリ共有をするくらいなら、チャネルを使って値をやり取りした方が安全」という考え方をするのです。
 
 > Instead of explicitly using locks to mediate access to shared data, Go encourages the use of channels to pass references to data between goroutines. 

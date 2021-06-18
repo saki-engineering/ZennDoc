@@ -119,7 +119,7 @@ func exitsyscall() {
 しかし、それでは効率が悪いので、Goでは言語固有のスケジューラの方でそれを非同期処理に変えて処理しています。
 
 :::message
-ここから先で紹介する実装はOS依存です。今回はLinuxの場合について記述します。
+ここから先で紹介するネットワークI/Oの実装はOS依存です。今回はLinuxの場合について記述します。
 :::
 
 Linuxではこの「ブロック処理→非同期処理」への変更を、epollと呼ばれる仕組みを使って行っています。
@@ -137,7 +137,11 @@ epoll使用の流れとしては以下のようになります。
 2. `epoll_ctl`関数で、epollの監視対象のfdを編集する
 3. `epoll_wait`関数で、監視対象に何かイベントが起こっていないかをチェックする
 
+Goのランタイム内では、このepollの仕組みが存分に利用されています。
+これから詳細を見ていきましょう。
+
 ## Goランタイムの中でのepoll
+epollを使うためには、まずはepollインスタンスが必要です。
 Goでは、ランタイム中からepollインスタンスを利用できるように、そのepollインスタンスのfdを保存しておくグローバル変数`epfd`が用意されています。
 ```go
 epfd int32 = -1 // epoll descriptor
@@ -193,6 +197,11 @@ func socket(ctx context.Context, net string, family, sotype, proto int, ipv6only
 
 というように、ちゃんと`epollctl`にたどり着きます。
 
+こうして`epoll`の監視対象として登録されたことで、I/Oが終了したときに処理に復帰する準備が整いました。
+この後は、おそらく「実行に時間がかかりすぎているG」としてプリエンプトの対象となり、該当のGがMから外れることになるでしょう。
+
+I/Oが終わったあと、後続の処理に復帰するための仕組みは`sysmon`の中で、`epoll_wait`を使って作られています。
+
 ### sysmonの中
 常時動いている`sysmon`関数の中では、「epollで実行可能になっているGがないかを探し(=`netpoll`関数)、あったらそれをランキューに入れる(=`injectglist`関数)」という挙動を常に実行しています。
 ```go
@@ -207,6 +216,7 @@ func sysmon() {
 出典:[runtime/proc.go](https://github.com/golang/go/blob/3075ffc93e962792ddf43b2a528ef19b1577ffb7/src/runtime/proc.go#L5384-L5401)
 
 実行可能なGを探し取得する`netpoll`関数の内部では、まさに`epoll_wait`関数の存在を確認できます。
+`epoll_wait`でイベント発生(=I/O実行待ちが終わった)が通知されたGが、まさに「実行可能なGのリスト」となるのです。
 ```go
 // netpoll checks for ready network connections.
 // Returns list of goroutines that become runnable.

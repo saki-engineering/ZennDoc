@@ -1,8 +1,12 @@
 ---
-title: "トレースとデバッグによる分析手法"
+title: "並行処理で役立つデバッグ&分析手法"
 ---
 # この章について
 並行処理を実装しているときに役に立ちそうなデバッグツールを、ここでまとめて紹介します。
+
+- `runtime/trace`によるトレース
+- `GODEBUG`環境変数によるデバッグ
+- Race Detector
 
 # traceについて
 `runtime/trace`パッケージを使うことで、どうゴールーチンが動いているのかGUIで可視化することができます。
@@ -231,3 +235,121 @@ SCHED 0ms: gomaxprocs=2 idleprocs=1 threads=4 spinningthreads=0 idlethreads=2 ru
 // (略)
 ```
 このように、`P`,`M`,`G`がその時どういう状態だったのかが詳細に出力されます。
+
+
+
+
+# Race Detector
+Goには、Race Conditionが起きていることを検出するための公式のツール**Race Detector**が存在します。
+
+公式ドキュメントはこちら。
+https://golang.org/doc/articles/race_detector
+
+## 使ってみる
+実際にそれを使っている様子をお見せしましょう。
+
+まずは、以下のように「グローバル変数`num`に対して、加算を並行に2回行う」コードを書きます。
+```go
+var num = 0
+
+func add(a int) {
+	num += a
+}
+
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		add(1)
+	}()
+	go func() {
+		defer wg.Done()
+		add(-1)
+	}()
+
+	wg.Wait()
+	fmt.Println(num)
+}
+```
+加算は非アトミックな処理であるためデータの競合が起こります。
+
+これをRace Detectorの方でも検出してみましょう。
+やり方は簡単です。プログラム実行の際に`-race`オプションをつけるだけです。
+```bash
+$ go run -race main.go
+==================
+WARNING: DATA RACE
+Read at 0x00000122ec90 by goroutine 8:
+  main.add()
+      /path/to/main.go:11 +0x6f
+  main.main.func2()
+      /path/to/main.go:24 +0x5f
+
+Previous write at 0x00000122ec90 by goroutine 7:
+  main.add()
+      /path/to/main.go:11 +0x8b
+  main.main.func1()
+      /path/to/main.go:20 +0x5f
+
+Goroutine 8 (running) created at:
+  main.main()
+      /path/to/main.go:22 +0xc8
+
+Goroutine 7 (finished) created at:
+  main.main()
+      /path/to/main.go:18 +0xa6
+==================
+0 //(fmt.Printlnの内容)
+Found 1 data race(s)
+exit status 66
+```
+
+`Found 1 data race(s)`と表示され、データ競合を確認することができました。
+
+このように、実行時に`-race`オプションをつけることによって、「**実際にデータ競合が起こったときに**」そのことを通知してくれます。
+
+:::message
+データ競合が実際に発生しなかった場合は何も起こりません。
+そのため、「データ競合が起こる**可能性のある**危ないコードだ」という警告はRace Detectorからは得ることができない、ということに注意です。
+:::
+
+## プログラムを修正
+それでは、データ競合が起こらないようにコードを直していきましょう。
+加算を行う前に排他制御を行うことで、アトミック性を確保します。
+
+```diff go
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
++	var mu sync.Mutex
+
+	go func() {
+		defer wg.Done()
++		mu.Lock()
+		add(1)
++		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
++		mu.Lock()
+		add(-1)
++		mu.Unlock()
+	}()
+
+	wg.Wait()
+	fmt.Println(num)
+}
+```
+:::message
+4章でも記述した通り`sync.Mutex`は本来低レイヤでの使用を想定したものであり、排他制御を使ったメモリ共有よりもチャネルを使える場面であるならばそちらを選ぶべき、ということは強調しておきます。
+:::
+
+これもRace Detectorにかけてみましょう。
+```bash
+$ go run -race main.go
+0
+```
+特に何も検知されることなく実行終了しました。デバッグ成功です。

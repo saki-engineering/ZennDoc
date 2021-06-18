@@ -163,7 +163,10 @@ https://golang.org/doc/asm
 
 Goコンパイラが使うアセンブラ言語についての説明です。`go tool objdump`の結果はこれと突き合わせながら読んでいくと何となく雰囲気が掴める。
 
+### Data Race Detector
+https://golang.org/doc/articles/race_detector
 
+11章で使用したRace Detectorの公式ドキュメントです。
 
 
 
@@ -188,3 +191,9 @@ https://blog.golang.org/codelab-share
 
 「タイトルが一番伝えたいこと」という感じの記事ver2です。
 「Go言語ではメモリシェアで情報を共有するんじゃなくてチャネルでのやり取りでそれをやるんだ！」ということをブログ形式で簡潔にまとめてあります。
+
+### Introducing the Go Race Detector
+https://blog.golang.org/race-detector
+
+Go1.1でRace Detectorが導入された際の紹介記事です。
+具体的なコードを出して、どういう風にこれを使っていけばいいのかということが紹介されています。

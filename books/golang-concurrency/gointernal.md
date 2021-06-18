@@ -87,9 +87,10 @@ type m struct {
 出典:[runtime/runtime2.go](https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L511-L602)
 
 :::message
-`mOS`構造体の定義はそのPCのOSによって異なり、例えばMacの場合は[`os_darwin.go`](https://github.com/golang/go/blob/e4615ad74d5becdd1fcee4879775a6d4118583c5/src/runtime/os_darwin.go#L12)ファイル内に存在し、中でpthreadと結びついているのがフィールドからわかります。
+`mOS`構造体の定義はそのPCのOSによって異なり、例えばMacの場合は[`os_darwin.go`](https://github.com/golang/go/blob/e4615ad74d5becdd1fcee4879775a6d4118583c5/src/runtime/os_darwin.go#L12)ファイル内に存在し、中でpthread[^2]と結びついているのがフィールドからわかります。
 Windowsの場合は[`os_windows.go`](https://github.com/golang/go/blob/e4615ad74d5becdd1fcee4879775a6d4118583c5/src/runtime/os_windows.go#L155)ファイル内に構造体定義が存在します。
 :::
+[^2]:pthreadとはPOSIX標準のスレッドのことを指し、ユーザースレッドに分類される(ユーザースレッドが何かについては11章を参照のこと)。
 
 ## P
 **P**は、Goプログラム実行に必要なリソースを表す概念です。

@@ -204,7 +204,7 @@ func main() {
 ここでもチャネルの出番です。`done`チャネルを作って、「メインからサブに止めてという情報を送る」ようにしてやればいいのです。
 ```diff go
 - func generator() <-chan int {
-+ func generator(done chan interface{}) <-chan int {
++ func generator(done chan struct{}) <-chan int {
 	result := make(chan int)
 	go func() {
 		defer close(result)
@@ -223,7 +223,7 @@ func main() {
 }
 
 func main() {
-+	done := make(chan interface{})
++	done := make(chan struct{})
 
 -	result := generator()
 +	result := generator(done)
@@ -236,6 +236,11 @@ func main() {
 `select`文は、`done`チャネルがcloseされたことを感知して`break LOOP`を実行します。
 こうすることで、サブルーチン内で実行されている`func generator`関数を確実に終わらせることができます。
 
+:::message
+`done`チャネルは`close`操作を行うことのみ想定されており、何か実際に値を送受信するということは考えられていません。
+そのため、チャネル型をメモリサイズ0の空構造体`struct{}`にすることにより、メモリの削減効果を狙うことができます。
+:::
+
 # FanIn
 複数個あるチャネルから受信した値を、1つの受信用チャネルの中にまとめる方法を**FanIn**といいます。
 
@@ -247,7 +252,7 @@ func main() {
 ## 基本(Google I/O 2012 ver.)
 まとめたいチャネルの数が固定の場合は、`select`文を使って簡単に実装できます。
 ```go
-func fanIn1(done chan interface{}, c1, c2 <-chan int) <-chan int {
+func fanIn1(done chan struct{}, c1, c2 <-chan int) <-chan int {
 	result := make(chan int)
 
 	go func() {
@@ -281,7 +286,7 @@ func fanIn1(done chan interface{}, c1, c2 <-chan int) <-chan int {
 
 ```go
 func main() {
-	done := make(chan interface{})
+	done := make(chan struct{})
 
 	gen1 := generator(done, 1) // int 1をひたすら送信するチャネル(doneで止める)
 	gen2 := generator(done, 2) // int 2をひたすら送信するチャネル(doneで止める)
@@ -307,7 +312,7 @@ func main() {
 FanInでまとめたいチャネル群が可変長変数やスライスで与えられている場合は、`select`文を直接使用することができません。
 このような場合でも動くようなFanInが、並行処理本の中にあったので紹介します。
 ```go
-func fanIn2(done chan interface{}, cs ...<-chan int) <-chan int {
+func fanIn2(done chan struct{}, cs ...<-chan int) <-chan int {
 	result := make(chan int)
 
 	var wg sync.WaitGroup

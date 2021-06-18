@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func generator(done chan interface{}, a int) <-chan int {
+func generator(done chan struct{}, a int) <-chan int {
 	gen := make(chan int)
 	go func() {
 		defer close(gen)
@@ -23,7 +23,7 @@ func generator(done chan interface{}, a int) <-chan int {
 	return gen
 }
 
-func fanIn1(done chan interface{}, c1, c2 <-chan int) <-chan int {
+func fanIn1(done chan struct{}, c1, c2 <-chan int) <-chan int {
 	result := make(chan int)
 
 	go func() {
@@ -52,7 +52,7 @@ func fanIn1(done chan interface{}, c1, c2 <-chan int) <-chan int {
 	return result
 }
 
-func fanIn2(done chan interface{}, cs ...<-chan int) <-chan int {
+func fanIn2(done chan struct{}, cs ...<-chan int) <-chan int {
 	result := make(chan int)
 
 	var wg sync.WaitGroup
@@ -86,7 +86,7 @@ func fanIn2(done chan interface{}, cs ...<-chan int) <-chan int {
 }
 
 func main() {
-	done := make(chan interface{})
+	done := make(chan struct{})
 
 	gen1 := generator(done, 1)
 	gen2 := generator(done, 2)

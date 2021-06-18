@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func generator(done chan interface{}) <-chan int {
+func generator(done chan struct{}) <-chan int {
 	result := make(chan int)
 	go func() {
 		defer close(result)
@@ -24,7 +24,7 @@ func generator(done chan interface{}) <-chan int {
 }
 
 func main() {
-	done := make(chan interface{})
+	done := make(chan struct{})
 
 	result := generator(done)
 	for i := 0; i < 5; i++ {

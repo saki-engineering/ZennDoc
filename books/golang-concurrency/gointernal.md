@@ -357,6 +357,12 @@ runtime.schedule() {
 ```
 出典:[runtime/proc.go](https://github.com/golang/go/blob/52d7033ff6d56094b7fa852bbdf51b4525bd6bb2/src/runtime/proc.go#L3349-L3358)
 
+![](https://storage.googleapis.com/zenn-user-upload/854531e07d1ca75d534c2dd2.png)
+
+:::message
+2の「GをMに取り付ける」作業と、3の「Gのステータス変更」作業は[`execute`](https://github.com/golang/go/blob/52d7033ff6d56094b7fa852bbdf51b4525bd6bb2/src/runtime/proc.go#L2668-L2699)関数で実装されています。
+:::
+
 ### ローカルキューに実行可能なGがあった場合
 現在スケジューラが動いているPのローカルキュー中に実行可能なGがあった場合、そこからGを取り出して(=[`runqget`](https://github.com/golang/go/blob/52d7033ff6d56094b7fa852bbdf51b4525bd6bb2/src/runtime/proc.go#L6049)関数)実行します。
 ```go

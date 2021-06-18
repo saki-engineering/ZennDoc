@@ -44,11 +44,11 @@ type waitq struct {
 // on a channel.
 type sudog struct {
 	// (一部抜粋)
-	g *g  // Gそのもの
+	g    *g  // Gそのもの
 	next *sudog // 後要素へのポインタ(連結リストなので)
 	prev *sudog // 前要素へのポインタ(連結リストなので)
 	elem unsafe.Pointer // 送受信したい値
-	c        *hchan // 送受信待ちをしている先のチャネル
+	c    *hchan // 送受信待ちをしている先のチャネル
 }
 ```
 出典:[runtime/runtime2.go](https://github.com/golang/go/blob/7307e86afda3c5c7f6158d2469c39606fd1dba65/src/runtime/runtime2.go#L345-L379)

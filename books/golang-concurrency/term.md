@@ -60,7 +60,7 @@ Go公式ブログの"[Concurrency is not parallelism](https://blog.golang.org/wa
 > (訳)並行処理は、問題解決の手段としてのプログラミングパターンのことです。
 > 並列処理は、並行処理を可能にするハードウェアの特性のことです。
 >
-出典:[書籍 Linux System Programming, 2nd Edition Chap.7](https://learning.oreilly.com/library/view/linux-system-programming/9781449341527/)
+> 出典:[書籍 Linux System Programming, 2nd Edition Chap.7](https://learning.oreilly.com/library/view/linux-system-programming/9781449341527/)
 
 ![](https://storage.googleapis.com/zenn-user-upload/69a628800a2184fd51c0da31.png)
 
@@ -105,6 +105,7 @@ Google I/O 2012で行われたセッション"[Go Concurrency Patterns](https://
 > (訳)世界を見渡して見えるものは、様々なものが独立に行われている様子でしょう。今日のこの観衆の中にも、私がこうして喋っている間に自分のことをしていたりツイートをしていたりする人がいると思います。
 > 会場の外にも他の人々がいて、多くの車が行き交っています。それらはいうならばすべて、独立した事象なのです。
 > **これを踏まえた上で、もしコンピュータープログラムを書くならば、もしこのような環境をプログラムで模倣・再現したいならば、それらを一つのシーケンスの中で実行するのはいい選択とは言えません。**
+>
 > 出典:[Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs)(該当箇所は0:55から)
 
 現実世界で起きている事象が独立・並列であることから、それらを扱うプログラムコードははsequential(シーケンスで実行)にするよりはconcurrent(並行処理)にした方がいい、という主張です。
@@ -125,12 +126,21 @@ Google I/O 2012で行われたセッション"[Go Concurrency Patterns](https://
 コードの実行順が予測できないことで生じる状況の一つに**Race Condition**(競合状態)というものがあります。
 これは「コードを実行するたびに結果が変わる可能性がある」という状態のことを指します。
 
-例えば、グローバル変数`i=0`に対して以下の2つの関数を実行することを考えます。
+例えば、グローバル変数`i=0`に対して以下の2つの処理を実行することを考えます。
 1. `i`の値を取得し、`+1`してから戻す
 2. `i`の値を取得し、`-1`してから戻す
 
 この場合、1の後に2がいつ実行されるかによって、最終的なグローバル変数`i`の値が変わってしまいます。
 ![](https://storage.googleapis.com/zenn-user-upload/39dd6cd3c83cf436a418052d.png)
+
+このように、非アトミック[^1]な処理を並行して行う場合には、Race Conditionが起こらないようコード設計に細心の注意を払う必要があります。
+[^1]:その処理に「アトミック性(原子性, atomicity)がある」とは、「その処理が全て実行された後の状態か、全く行われなかった状態のどちらかしか取り得ない」という性質のことです。
+
+:::message
+この例のように、通常加算処理というのはアトミックではありません。
+しかしGo言語では、低レイヤでの使用を想定した[`sync/atomic`](https://golang.org/pkg/sync/atomic/)パッケージが用意されており、ここで様々なアトミック処理を提供しています。
+今回の例の場合、この`sync/atomic`パッケージで提供されている`func AddInt64`関数を利用して実装すればこのようなRace Conditionは回避可能です。
+:::
 
 ### 共有メモリに正しくアクセスしないといけない
 先ほどのようなRace Conditionを避けるためには、メモリに参照禁止のロックをかけるという方法が一つ挙げられます。

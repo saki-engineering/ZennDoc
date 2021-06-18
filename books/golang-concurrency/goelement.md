@@ -114,11 +114,8 @@ what is today's lucky number?
 Today's your lucky number is 7!
 ```
 今日のラッキーナンバーが表示されて、ちゃんと「サブのゴールーチンが終わるまでメインを待たせる」という期待通りの挙動を得ることができました。
+いわゆる「同期をとる」という作業をここで実現させています。
 ![](https://storage.googleapis.com/zenn-user-upload/323ed9976be33eebf94c7f60.png)
-
-:::message
-いわゆる「同期をとる」という作業を実現することができます。
-:::
 
 # チャネル
 ## 定義

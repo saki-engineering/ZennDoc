@@ -3,7 +3,7 @@ title: "解説&翻訳 - A Quick Guide to Go's Assembler"
 emoji: "💻"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["go", "assembly"]
-published: false
+published: true
 ---
 # この記事について
 Goの実装というのは基本的にはGo言語そのもので行われますが、`runtime`パッケージや`math/big`といった低レイヤ・マシンと密接に関わる部分に関してはGoアセンブリで実装されています。

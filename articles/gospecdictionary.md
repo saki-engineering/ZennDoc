@@ -580,7 +580,7 @@ DQNEO(@DQNEO)さんがまとめたこちらのスライドがわかりやすい�
 https://speakerdeck.com/dqneo/go-language-underlying-type
 
 ### unique(uniqueness)
-ある識別子がunique(同一)であるかどうかというのはきちんと[Uniqueness of identifiers](https://golang.org/ref/spec#Uniqueness_of_identifiers)という節で定義されています。
+ある識別子がunique(一意)であるかどうかというのはきちんと[Uniqueness of identifiers](https://golang.org/ref/spec#Uniqueness_of_identifiers)という節で定義されています。
 いわゆる「構造体の中に同じ名前のフィールドやメソッドがあってはいけませんよ」という決まりの「同じ」という部分の正確な定義を行っているということです。
 > (例文) In a method set, each method must have a **unique** non-blank method name.
 

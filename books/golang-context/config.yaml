@@ -7,7 +7,7 @@ summary: "Goの標準パッケージにはcontextパッケージというもの�
 
 この本では、「contextとは何か？」というところから「どのように使えばいいのかわかる」ところまでたどり着けるように、Goのcontextまわりのことを解説しました。"
 topics: ["go"]
-published: false
+published: true
 price: 0 # 有料の場合200〜5000
 # 本に含めるチャプターを順番に並べましょう
 chapters:

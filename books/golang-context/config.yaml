@@ -1,0 +1,25 @@
+title: "よくわかるcontextの使い方"
+summary: "Goの標準パッケージにはcontextパッケージというものが存在します。
+
+このパッケージは、net/httpやdatabase/sqlのような現実の事象と対応している何かが存在するようなパッケージではないため、初学者にとっては使い道がわからない、となってしまいがちです。
+
+しかしcontextパッケージは、複数のゴールーチンを跨いだ処理を実装する際には非常に強力な力を発揮する、とても便利なパッケージなのです。
+
+この本では、「contextとは何か？」というところから「どのように使えばいいのかわかる」ところまでたどり着けるように、Goのcontextまわりのことを解説しました。"
+topics: ["go"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - intro
+  - definition
+  - done
+  - cancelchain
+  - deadline
+  - err
+  - value
+  - appliedvalue
+  - usage
+  - pkgdesign
+  - internal
+  - appendix

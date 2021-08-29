@@ -38,6 +38,7 @@ func main() {
 	// doneチャネルがcloseされたらキャンセル
 	done := make(chan struct{})
 	gen := generator(done, 1)
+	deadlineChan := time.After(time.Second)
 
 	wg.Add(1)
 
@@ -46,7 +47,7 @@ LOOP:
 		select {
 		case result := <-gen: // genから値を受信できた場合
 			fmt.Println(result)
-		case <-time.After(time.Second): // 1秒間受信できなかったらタイムアウト
+		case <-deadlineChan: // 1秒間受信できなかったらタイムアウト
 			fmt.Println("timeout")
 			break LOOP
 		}
@@ -95,6 +96,7 @@ var wg sync.WaitGroup
 func main() {
 -	done := make(chan struct{})
 -	gen := generator(done, 1)
+-	deadlineChan := time.After(time.Second)
 +	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
 +	gen := generator(ctx, 1)
 
@@ -105,7 +107,7 @@ LOOP:
 		select {
 -		case result := <-gen:
 -			fmt.Println(result)
--		case <-time.After(time.Second): // 1秒間selectできなかったら
+-		case <-deadlineChan: // 1秒間selectできなかったら
 -			fmt.Println("timeout")
 -			break LOOP
 
@@ -145,6 +147,7 @@ LOOP:
 func main() {
 -	done := make(chan struct{})
 -	gen := generator(done, 1)
+-	deadlineChan := time.After(time.Second)
 +	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))
 +	gen := generator(ctx, 1)
 
@@ -155,7 +158,7 @@ LOOP:
 		select {
 -		case result := <-gen:
 -			fmt.Println(result)
--		case <-time.After(time.Second): // 1秒間selectできなかったら
+-		case <-deadlineChan: // 1秒間selectできなかったら
 -			fmt.Println("timeout")
 -			break LOOP
 
@@ -217,10 +220,11 @@ ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 contextによる自動タイムアウトの導入によって、`main`関数内でタイムアウトしたか否かを判定するロジックが変わっています。
 ```diff go
 // 再掲
+-deadlineChan := time.After(time.Second)
 select {
 -case result := <-gen:
 -	fmt.Println(result)
--case <-time.After(time.Second): // 1秒間selectできなかったら
+-case <-deadlineChan: // 1秒間selectできなかったら
 -	fmt.Println("timeout")
 -	break LOOP
 

@@ -32,6 +32,8 @@ func main() {
 	done := make(chan struct{})
 	gen := generator(done, 1)
 
+	deadlineChan := time.After(time.Second)
+
 	wg.Add(1)
 
 LOOP:
@@ -39,7 +41,7 @@ LOOP:
 		select {
 		case result := <-gen:
 			fmt.Println(result)
-		case <-time.After(time.Second): // 1秒間selectできなかったら
+		case <-deadlineChan: // 1秒間selectできなかったら
 			fmt.Println("timeout")
 			break LOOP
 		}

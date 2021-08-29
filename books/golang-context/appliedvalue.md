@@ -195,7 +195,27 @@ go-staticcheckという静的解析ツールでは、独自非公開型を定義
 という警告が出るようになっています。
 :::
 
+### (210829追記)
+syumaiさん([@__syumai](https://twitter.com/__syumai))から以下のようなコメントいただきました！
+ありがとうございます！
 
+https://twitter.com/__syumai/status/1431640657311846408
+
+```go
+// ある一定の型の定数でkeyを区別する
+type ctxKet int
+const (
+	a ctxKey = iota
+	b
+)
+
+↓
+
+// そもそもkeyが違えば型も変えてしまう
+type ctxKeyA struct{}
+type ctxKeyB struct{}
+```
+`int`型の`iota`にするよりも、空構造体`struct{}`を採用することで、メモリアロケーションを抑えることができるというメリットがあります。
 
 
 # valueとして与えてもいいデータ・与えるべきでないデータ

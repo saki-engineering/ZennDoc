@@ -93,8 +93,8 @@ func (srv *MyServer) Request(ctx context.Context, path string, token string) {
 次に、呼び出されるハンドラの中の一つを見てみましょう。
 
 ## ハンドラ(handlers)
-`handlers`パッケージ内では、ハンドラを表す独自型として`MyHandlerFunc`というものを定義しました。
-この型を満たす変数の一つとして、ハンドラ`MyHandleFunc`を定義しました。
+`handlers`パッケージ内では、ハンドラを表す独自型として`MyHandleFunc`というものを定義しました。
+この型を満たす変数の一つとして、ハンドラ`GetGreeting`を定義しました。
 
 そしてその中で、
 - トークン検証

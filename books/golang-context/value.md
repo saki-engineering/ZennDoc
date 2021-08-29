@@ -54,7 +54,7 @@ func main() {
 
 
 # contextを使用した値の伝達
-上の処理は、contextを力を最大限使えば、以下のように書き直すことができます。
+上の処理は、contextの力を最大限使えば、以下のように書き直すことができます。
 ```diff go
 -func generator(ctx context.Context, num int, userID int, authToken string, traceID int) <-chan int {
 +func generator(ctx context.Context, num int) <-chan int {

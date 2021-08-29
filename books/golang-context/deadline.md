@@ -204,7 +204,7 @@ func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)
 出典:[pkg.go.dev - context pkg](https://pkg.go.dev/context@go1.17#WithTimeout)
 
 そのため、`WithDeadline`関数を用いたcontext生成は`WithTimeout`関数を使って書き換えることもできます。
-例えば、以下の2つはどちらも「2秒後にタイムアウトさせるcontext」を生成します。
+例えば、以下の2つはどちらも「1秒後にタイムアウトさせるcontext」を生成します。
 ```go
 // 第二引数に時刻 = time.Timeを指定
 ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second))

@@ -298,7 +298,7 @@ http.ListenAndServe(":8080", nil)
 # 次章予告
 ここまではサーバーの起動作業、具体的には
 - `net.Conn`を入手して、リクエストを受け取る体制を整える
-- `http.ListenAndServe`関数の第二引数に渡す`http.response`型の用意
+- ハンドラ関数の第二引数に渡す`http.response`型の用意
 - `http.ListenAndServe`関数の第二引数(今回は`nil`であるため`DefaultServeMux`となる)で渡されたルーティングハンドラの起動
 
 までを追っていきました。

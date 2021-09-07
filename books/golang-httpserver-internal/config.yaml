@@ -1,0 +1,19 @@
+title: "Deep Dive into The Go's Web Server"
+summary: "Goのnet/httpパッケージはとてもよくできており、Webサーバーを動かすのに必要になる「httpコネクションを確立してリクエストを読んでルーティングして……」という手続き的な処理を気にせずとも誰でも簡単にWebサーバーを立てられるようになっています。
+
+ですが、そのnet/httpが代わりにやってくれている「裏側の処理」の部分が気になる、何やっているんだろう？と不思議に思っている方はいませんか？
+
+この本では、実際に筆者がnet/httpパッケージのソースコードを読み込んだうえで、「GoのWebサーバーがどのような仕組みで起動・動いているのか」というところについて、図を使いながら解説しています。
+"
+topics: ["go"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - intro
+  - helloserver
+  - serverstart
+  - httpmux
+  - httphandler
+  - httpoverview
+  - appendix

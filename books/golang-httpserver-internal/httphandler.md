@@ -60,8 +60,8 @@ type ResponseWriter interface {
 ```go
 // A response represents the server side of an HTTP response.
 type response struct {
-	conn             *conn
-    req              *Request // request for this response
+	conn	*conn
+	req	*Request // request for this response
     // (以下略)
 }
 

@@ -6,7 +6,7 @@ summary: "Goのnet/httpパッケージはとてもよくできており、Webサ
 この本では、実際に筆者がnet/httpパッケージのソースコードを読み込んだうえで、「GoのWebサーバーがどのような仕組みで起動・動いているのか」というところについて、図を使いながら解説しています。
 "
 topics: ["go"]
-published: false
+published: true
 price: 0 # 有料の場合200〜5000
 # 本に含めるチャプターを順番に並べましょう
 chapters:

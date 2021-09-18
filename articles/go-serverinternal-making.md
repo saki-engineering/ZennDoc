@@ -3,7 +3,7 @@ title: "メイキング - Deep Dive into The Go's Web Server"
 emoji: "✍️"
 type: "idea" # tech: 技術記事 / idea: アイデア
 topics: ["ポエム"]
-published: false
+published: true
 ---
 # この記事について
 この記事は、先日公開したZenn本[Deep Dive into The Go's Web Server](https://zenn.dev/hsaki/books/golang-httpserver-internal)のメイキングです。

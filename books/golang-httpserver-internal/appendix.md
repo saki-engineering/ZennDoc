@@ -45,6 +45,12 @@ func main() {
 
 
 
+# 後日談
+このZenn本のメイキングについて、こちらの記事で公開しました。
+https://zenn.dev/hsaki/articles/go-serverinternal-making
+
+
+
 
 # 参考/関連文献
 今回の話を書くにあたって参考にした文献と、本記事では触れなかった`net/http`以外のWeb周り関連サードパーティパッケージについて軽く紹介したいと思います。

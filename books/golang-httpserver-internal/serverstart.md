@@ -222,7 +222,7 @@ type response struct {
 
 ### 4-2. `http.serverHandler.ServeHTTP`メソッドの呼び出し
 リクエスト内容を得ることができたら、いよいよハンドリングに入っていきます。
-`http.conn`のフィールドに含まれていた`http.Server`を、`http.serverHandler`という形にキャストした上で`ServeHTTP`メソッドを呼び出します。
+`http.conn`のフィールドに含まれていた`http.Server`を、`http.serverHandler`型インスタンスにラップした上で`ServeHTTP`メソッドを呼び出します。
 ```go
 type serverHandler struct {
 	srv *Server

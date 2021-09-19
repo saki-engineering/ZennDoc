@@ -81,3 +81,17 @@ h1 := func(w http.ResponseWriter, _ *http.Request) {
 }
 ```
 のように`http.ResponseWriter`に書き込まれた内容は、ネットワークを通じて返却するレスポンスへの書き込みとなるわけです。
+
+## (210919追記)
+[Hiroaki Nakamura(@hnakamur2)](https://twitter.com/hnakamur2)さんから、「`http.response.Write()`メソッドを呼んだ後にネットワーク書き込みにたどり着くまで」についての補足情報をいただきました。([ツイートリンク](https://twitter.com/hnakamur2/status/1439437486007013378))
+
+1. ([コード出典](https://github.com/golang/go/blob/go1.17/src/net/http/server.go#L1549-L1555))
+非公開の`http.response.write()`メソッドが呼ばれる
+2. ([コード出典](https://github.com/golang/go/blob/go1.17/src/net/http/server.go#L1591-L1595))
+その中で、`http.response`型内部にある`bufio.Writer`の`Write`メソッドが呼ばれる
+3. ([コード出典](https://github.com/golang/go/blob/go1.17/src/net/http/server.go#L1032-L1033))
+`http.response`型内部の`bufio.Writer`インターフェースの具体型は、[本記事3章](https://github.com/golang/go/blob/go1.17/src/net/http/server.go#L1591-L1595)で`http.response`型を取得するときに呼んだ`http.conn.readRequest`メソッドにて、`http.response.cw`フィールド(`http.chunkWriter`型)がセットされている
+4. ([コード出典](https://github.com/golang/go/blob/go1.17/src/net/http/server.go#L383))
+`http.chunkWriter`型の`Write`メソッドにてネットワーク書き込みが行われ、この`Write`メソッドの中身を掘っていくと`net.Conn.Write`メソッドにたどり着く
+
+ということです。情報ありがとうございました。

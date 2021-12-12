@@ -3,7 +3,7 @@ title: "Goにおけるjsonの扱い方を整理・考察してみた ~ データ
 emoji: "🧪"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["go", "json"]
-published: false
+published: true
 ---
 # この記事について
 この記事は[Go Advent Calendar 2021](https://qiita.com/advent-calendar/2021/go) 13日目の記事です。

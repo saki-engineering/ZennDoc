@@ -3,7 +3,7 @@ title: "Goで時刻を扱うチートシート"
 emoji: "⏰"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["go"]
-published: false
+published: true
 ---
 # この記事について
 ![](https://storage.googleapis.com/zenn-user-upload/4808d9ec1f3a-20220410.png)

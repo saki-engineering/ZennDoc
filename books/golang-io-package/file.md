@@ -197,7 +197,7 @@ if err != nil {
 +	if err != nil {
 +		fmt.Println(err)
 +	}
-+ }
++ }()
 
 // 以下write処理等を書く
 ```

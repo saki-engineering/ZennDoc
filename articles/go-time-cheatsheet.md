@@ -578,15 +578,21 @@ exit status 1
 UTC(協定標準時)のようなメジャーな時間ではなく、今度はニューヨーク時間(通常UTC-0500、サマータイムUTC-0400)で検証してみましょう。
 ```go
 var (
-	newYork *time.Location = func() *time.Location {
-		location, _ := time.LoadLocation("America/New_York")
-		return location
-	}()
-	timeTime time.Time = time.Date(2022, 3, 31, 20, 0, 0, 0, newYork)
-	unixTime int64     = 1648771200
-	strTime  string    = "2022-03-31T20:00:00-04:00"
-	jsonTime string    = `{"timestamp":"2022-03-31T20:00:00-04:00"}`
+	newYork  *time.Location
+	timeTime time.Time
+	unixTime int64  = 1648771200
+	strTime  string = "2022-03-31T20:00:00-04:00"
+	jsonTime string = `{"timestamp":"2022-03-31T20:00:00-04:00"}`
 )
+
+func TestMain(m *testing.M) {
+	location, _ := time.LoadLocation("America/New_York")
+	newYork = location
+
+	timeTime = time.Date(2022, 3, 31, 20, 0, 0, 0, newYork)
+
+	m.Run()
+}
 ```
 ```bash
 $ go test
@@ -601,6 +607,19 @@ $ go test
 FAIL
 exit status 1
 ```
+:::message
+(22/4/15追記)
+当初ニューヨーク時間を表す`*time.Location`型の変数`newYork`を以下のように定義していましたが、コメントにてパフォーマンスが悪いとのご指摘をいただきましたので改稿しました。@budougumi0617さんありがとうございます！
+```go
+var (
+	// 変数newYorkを呼ぶたびに無名関数の中身＝time.LoadLocation関数が実行されてしまう
+	newYork *time.Location = func() *time.Location {
+		location, _ := time.LoadLocation("America/New_York")
+		return location
+	}()
+)
+```
+:::
 UNIX時間からの変換である以下3つがおかしな挙動をしているのは、UTC(協定標準時)の時と同様です。
 - `unix2time`: UNIX時間から`time.Time`型への変換
 - `unix2str`: UNIX時間から文字列への変換

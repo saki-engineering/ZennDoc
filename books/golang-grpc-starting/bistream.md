@@ -267,31 +267,44 @@ M:
 +		return
 +	}
 +
-+	sendCount := 5
-+	fmt.Printf("Please enter %d names.\n", sendCount)
-+	for i := 0; i < sendCount; i++ {
-+		scanner.Scan()
-+		name := scanner.Text()
++	sendNum := 5
++	fmt.Printf("Please enter %d names.\n", sendNum)
 +
-+		if err := stream.Send(&hellopb.HelloRequest{
-+			Name: name,
-+		}); err != nil {
-+			fmt.Println(err)
-+			continue
++	var sendEnd, recvEnd bool
++	sendCount := 0
++	for !(sendEnd && recvEnd) {
++		// 送信処理
++		if !sendEnd {
++			scanner.Scan()
++			name := scanner.Text()
++
++			sendCount++
++			if err := stream.Send(&hellopb.HelloRequest{
++				Name: name,
++			}); err != nil {
++				fmt.Println(err)
++				sendEnd = true
++			}
++
++			if sendCount == sendNum {
++				sendEnd = true
++				if err := stream.CloseSend(); err != nil {
++					fmt.Println(err)
++				}
++			}
 +		}
 +
-+		if errors.Is(err, io.EOF) {
-+			return
++		// 受信処理
++		if !recvEnd {
++			if res, err := stream.Recv(); err != nil {
++				if !errors.Is(err, io.EOF) {
++					fmt.Println(err)
++				}
++				recvEnd = true
++			} else {
++				fmt.Println(res.GetMessage())
++			}
 +		}
-+		if err != nil {
-+			fmt.Println(err)
-+			continue
-+		} else {
-+			fmt.Println(res.GetMessage())
-+		}
-+	}
-+	if err := stream.CloseSend(); err != nil {
-+		fmt.Println(err)
 +	}
 +}
 ```
@@ -315,7 +328,7 @@ func HelloBiStreams() {
 	// (一部抜粋)
 	stream, err := client.HelloBiStreams(context.Background())
 
-	for i := 0; i < sendCount; i++ {
+	for {
 		if err := stream.Send(/*(略)*/);
 	}
 }
@@ -375,9 +388,8 @@ func HelloBiStreams() {
 	// (一部抜粋)
 	stream, err := client.HelloBiStreams(context.Background())
 	for {
-		res, err := stream.Recv();
-		if errors.Is(err, io.EOF) {
-			return
+		if res, err := stream.Recv(); err != nil {
+			if !errors.Is(err, io.EOF)
 		}
 	}
 }

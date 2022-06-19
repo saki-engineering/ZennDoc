@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-grpc-deployment
+spec:
+  replicas: {{ .Values.replicaNum }}
+  selector:
+    matchLabels:
+      app: k8s-grpc
+  template:
+    metadata:
+      labels:
+        app: k8s-grpc
+    spec:
+      containers:
+        - name: k8s-server
+          image: {{ .Values.grpcContainerImage }}
+          env:
+          - name: ENV
+            value: "remote"
+          ports:
+          - containerPort: 8080
+            name: grpc-endpoint

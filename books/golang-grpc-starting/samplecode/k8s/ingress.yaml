@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-grpc-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/backend-protocol-version: GRPC
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true"
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.acmArn }}
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /myapp.GreetingService/
+        pathType: Prefix
+        backend:
+          service:
+            name: k8s-grpc-service
+            port: 
+              number: 8080
+      - path: /grpc.reflection.v1alpha.ServerReflection/
+        pathType: Prefix
+        backend:
+          service:
+            name: k8s-grpc-service
+            port: 
+              number: 8080

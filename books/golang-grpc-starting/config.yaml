@@ -1,0 +1,30 @@
+title: "作ってわかる！ はじめてのgRPC"
+summary: "gRPCは主にバックエンド、特にマイクロサービス同士の通信に多く使われる通信方式です。
+
+しかしそれゆえに知名度が低く、「gRPCってどんな通信なんだろう？」「HTTPとは別の仕組みなの？」と思っている方もたくさんいるのではないでしょうか。
+
+この本では、gRPCはそもそもどんなコンセプトで作られた通信方式なのかから、Goでの具体的な実装ノウハウ、AWSにデプロイするための設定までを通貫して解説することで、
+「gRPC全くわからない」という人が「自分で実装して動かせそうな気がする……！」と思える段階までたどり着けるようにしました。"
+topics: ["go", "grpc"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - intro
+  - rpc
+  - proto
+  - codegenerate
+  - server
+  - client
+  - stream
+  - serverstream
+  - clientstream
+  - bistream
+  - errorcode
+  - serverinterceptor
+  - clientinterceptor
+  - metadata
+  - concurrency
+  - awshost
+  - healthcheck
+  - appendix

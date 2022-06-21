@@ -16,6 +16,9 @@ syntax = "proto3";
 // packageの宣言
 package myapp;
 
+// go_packageのPATH
+option go_package = "../";
+
 // サービスの定義
 service GreetingService {
 	// サービスが持つメソッドの定義

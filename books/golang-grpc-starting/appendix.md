@@ -97,3 +97,15 @@ https://logmi.jp/tech/articles/325692
 
 `protoc`プラグインを使うことによって、`protoc`コマンドで様々な生成物を作れるようになります。
 このセッションでは、gRPC/RESTの変換を行うためのプロキシコードも一緒に生成するために、どうやってプラグインを開発したのかについて紹介しています。
+
+### gGPCライブラリ - Connect
+https://connect.build/docs/introduction/
+https://pkg.go.dev/github.com/bufbuild/connect-go
+
+一番よく使われているgRPCのパッケージは、本記事でも使った`google.golang.org/grpc`です。
+しかし、2022/6/1になんと新しいgRPCパッケージであるConnectというものが公開されました。
+
+内部のHTTP/2の実装が`google.golang.org/grpc`よりもよりGo標準に近い感じになっていたり、使い心地が「`http.Handler`関数を使ってパスーハンドラの対応づけをしていく」という`net/http`に近い風になっていたりと、なかなか面白いようです。
+
+[渋川さん(@shibu_jp)](https://twitter.com/shibu_jp)が書いたブログにいち早く紹介記事が載っているので、詳細はそちらに譲ります。
+https://future-architect.github.io/articles/20220623a/

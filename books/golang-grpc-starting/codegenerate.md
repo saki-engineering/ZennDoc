@@ -60,6 +60,15 @@ $ go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
 └─ go.sum
 ```
 
+:::message
+自動生成させるGoのコードを`pkg/grpc`直下に配置するため、`proto`ファイル内の`go_package`には以下のように指定していました。
+```protobuf
+// protoファイルから自動生成させるGoのコードの置き先
+// (詳細は4章にて)
+option go_package = "pkg/grpc";
+```
+:::
+
 
 
 

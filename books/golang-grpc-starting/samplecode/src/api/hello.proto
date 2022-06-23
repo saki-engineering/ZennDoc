@@ -1,7 +1,8 @@
 // protoのバージョンの宣言
 syntax = "proto3";
 
-// 生成するgoコードのpackage宣言をどうするか
+// protoファイルから自動生成させるGoのコードの置き先
+// (詳細は4章にて)
 option go_package = "pkg/grpc";
 
 // packageの宣言(意味合いとしてはGoのファイルと同じ感じ)

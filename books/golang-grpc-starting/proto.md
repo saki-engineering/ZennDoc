@@ -13,6 +13,10 @@ RPCは関数の呼び出しのわけですから、その関数の定義・戻�
 // protoのバージョンの宣言
 syntax = "proto3";
 
+// protoファイルから自動生成させるGoのコードの置き先
+// (詳細は4章にて)
+option go_package = "pkg/grpc";
+
 // packageの宣言
 package myapp;
 

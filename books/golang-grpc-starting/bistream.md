@@ -158,7 +158,7 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 
 
 # gRPCurlを用いたサーバーサイドの動作確認
-それでは、この`HelloClientStream`メソッドの動作確認をgRPCurlでやってみましょう。
+それでは、この`HelloBiStreams`メソッドの動作確認をgRPCurlでやってみましょう。
 サーバー起動を行った後に、以下のようにリクエストを送信します。
 ```bash
 $ $ grpcurl -plaintext -d '{"name": "hsaki"}{"name": "a-san"}{"name": "b-san"}{"name": "c-san"}{"name": "d-san"}' localhost:8080 myapp.GreetingService.HelloBiStreams
@@ -222,7 +222,7 @@ type GreetingService_HelloBiStreamsClient interface {
 ```
 
 ## クライアントの実装
-クライアントに新しく追加された`HelloClientStream`メソッドを使って、gRPCサーバー上にある`HelloClientStream`メソッドを呼び出す処理を書いていきましょう。
+クライアントに新しく追加された`HelloBiStream`メソッドを使って、gRPCサーバー上にある`HelloBiStream`メソッドを呼び出す処理を書いていきましょう。
 ここでは一例として「一つリクエストを送信するごとに、それに対するレスポンスを一つ受け取る」というロジックの実装をしてみます。
 ```diff go:cmd/client/main.go
 func main() {

@@ -18,7 +18,7 @@ title: "gRPCとGoの並行処理"
 func main() {
 	conn, _ := grpc.Dial("localhost:8080")
 
-	// 同じconnから生成したクライアントをs
+	// 同じconnから生成したクライアントを
 	client1 := my1pb.MyServiceClient(conn)
 	client2 := my2pb.MyServiceClient(conn)
 

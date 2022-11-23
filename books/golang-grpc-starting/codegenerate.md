@@ -9,8 +9,8 @@ service GreetingService {
 }
 ```
 実際にこの通信を実現されるためには、
-- `HelloRequest`型のリクエストを受け取り、レスポンスを`HelloRespomse`型にして返すサーバー
-- `HelloRequest`型のリクエストを送信して、`HelloRespomse`型のレスポンスを受け取るクライアント
+- `HelloRequest`型のリクエストを受け取り、レスポンスを`HelloResponse`型にして返すサーバー
+- `HelloRequest`型のリクエストを送信して、`HelloResponse`型のレスポンスを受け取るクライアント
 
 の2つが必要です。
 サーバーにしてもクライアントにしても、「リクエスト・レスポンスをどうやって作るか」というビジネスロジック部分は自分で書く必要がありますが、リクエスト・レスポンスをProtocol Buffersでシリアライズ・デシリアライズするというところについては、どこでも登場する定形処理です。

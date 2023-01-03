@@ -93,7 +93,7 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 
 ### リクエスト受信処理
 クライアントからリクエストを受信するための方法は、クライアントストリーミングのときと同様です。
-メソッドの引数として受け取った`stream`の`Send`メソッドでリクエストを受信し、そのとき得られた返り値のエラーが`io.EOF`と等しかった場合に「クライアントがもうリクエストを送ってこない」と判断します。
+メソッドの引数として受け取った`stream`の`Recv`メソッドでリクエストを受信し、そのとき得られた返り値のエラーが`io.EOF`と等しかった場合に「クライアントがもうリクエストを送ってこない」と判断します。
 ```go
 // クライアントストリーミングの場合
 func (s *myServer) HelloClientStream(stream hellopb.GreetingService_HelloClientStreamServer) error {

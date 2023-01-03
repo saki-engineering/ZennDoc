@@ -270,18 +270,18 @@ M:
 +		return
 +	}
 +
-+	sendNum := 5
-+	fmt.Printf("Please enter %d names.\n", sendNum)
++	maxSendCount := 5
++	fmt.Printf("Please enter %d names.\n", maxSendCount)
 +
 +	var sendEnd, recvEnd bool
-+	sendCount := 0
++	currentSendCount := 0
 +	for !(sendEnd && recvEnd) {
 +		// 送信処理
 +		if !sendEnd {
 +			scanner.Scan()
 +			name := scanner.Text()
 +
-+			sendCount++
++			currentSendCount++
 +			if err := stream.Send(&hellopb.HelloRequest{
 +				Name: name,
 +			}); err != nil {
@@ -289,7 +289,7 @@ M:
 +				sendEnd = true
 +			}
 +
-+			if sendCount == sendNum {
++			if currentSendCount == maxSendCount {
 +				sendEnd = true
 +				if err := stream.CloseSend(); err != nil {
 +					fmt.Println(err)

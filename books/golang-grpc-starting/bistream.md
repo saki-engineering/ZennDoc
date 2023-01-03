@@ -1,12 +1,17 @@
 ---
 title: "双方向ストリーミングの実装"
 ---
+
 # この章について
-この章では、gRPCの双方向ストリーミングを行う`HelloBiStreams`メソッドの作り方をみていきます。
+
+この章では、gRPC の双方向ストリーミングを行う`HelloBiStreams`メソッドの作り方をみていきます。
 
 # メソッドの追加処理
-## protoファイルでの定義
-まずは、protoファイルに`HelloBiStreams`メソッドの定義を記述します。
+
+## proto ファイルでの定義
+
+まずは、proto ファイルに`HelloBiStreams`メソッドの定義を記述します。
+
 ```diff protobuf:api/hello.proto
 service GreetingService {
 	// サービスが持つメソッドの定義
@@ -19,10 +24,13 @@ service GreetingService {
 +	rpc HelloBiStreams (stream HelloRequest) returns (stream HelloResponse);
 }
 ```
+
 今回はリクエスト・レスポンスともにストリーミングを使って送受信するため、メソッド定義の中で引数部分にも戻り値部分にも`stream`とつけています。
 
 ## クライアントストリーミングメソッド用のコードを自動生成させる
-protoファイルの修正が終わったところでもう一度以下の`protoc`コマンドを実行し、`HelloBiStreams`メソッド用のコードを自動生成させます。
+
+proto ファイルの修正が終わったところでもう一度以下の`protoc`コマンドを実行し、`HelloBiStreams`メソッド用のコードを自動生成させます。
+
 ```bash
 $ cd api
 $ protoc --go_out=../pkg/grpc --go_opt=paths=source_relative \
@@ -30,17 +38,14 @@ $ protoc --go_out=../pkg/grpc --go_opt=paths=source_relative \
 	hello.proto
 ```
 
-
-
-
-
-
-
 # サーバーサイドの実装
-ここからは、gRPCサーバーの中に`HelloBiStreams`メソッドを付け加えるように実装を追加していきます。
+
+ここからは、gRPC サーバーの中に`HelloBiStreams`メソッドを付け加えるように実装を追加していきます。
 
 ## 自動生成されたコード
+
 自動生成されたコードは、元々あった`GreetingServiceServer`サービスに`HelloBiStreams`メソッドが追加されたものになります。
+
 ```diff go:pkg/grpc/hello_grpc.pb.go
 type GreetingServiceServer interface {
 	// サービスが持つメソッドの定義
@@ -56,6 +61,7 @@ type GreetingServiceServer interface {
 ```
 
 `HelloBiStreams`メソッドの引数には`GreetingService_HelloBiStreamsServer`インターフェースが設定されており、サーバーサイドではこの`Send`メソッド・`Recv`メソッドを使ってクライアントとのデータのやり取りを行います。
+
 ```go:pkg/grpc/hello_grpc.pb.go
 type GreetingService_HelloBiStreamsServer interface {
 	Send(*HelloResponse) error
@@ -65,10 +71,12 @@ type GreetingService_HelloBiStreamsServer interface {
 ```
 
 ## サーバーサイドのビジネスロジックを実装する
+
 実際に`Send`メソッド・`Recv`メソッドを使って「クライアントからリクエストを受け取り、レスポンスを返す」サーバーサイドのコードを書いていきましょう。
 `HelloBiStreams`メソッドのシグネチャは、自動生成された`GreetingServiceServer`インターフェースに含まれていた`HelloBiStreams`メソッドに従います。
 
 ここでは一例として「一つリクエストを受信するごとに、それに対するレスポンスを一つ返す」というロジックの実装をしてみます。
+
 ```go:cmd/server/main.go
 func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsServer) error {
 	for {
@@ -92,8 +100,10 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 以下、特筆すべき箇所を解説します。
 
 ### リクエスト受信処理
+
 クライアントからリクエストを受信するための方法は、クライアントストリーミングのときと同様です。
-メソッドの引数として受け取った`stream`の`Send`メソッドでリクエストを受信し、そのとき得られた返り値のエラーが`io.EOF`と等しかった場合に「クライアントがもうリクエストを送ってこない」と判断します。
+メソッドの引数として受け取った`stream`の`Recv`メソッドでリクエストを受信し、そのとき得られた返り値のエラーが`io.EOF`と等しかった場合に「クライアントがもうリクエストを送ってこない」と判断します。
+
 ```go
 // クライアントストリーミングの場合
 func (s *myServer) HelloClientStream(stream hellopb.GreetingService_HelloClientStreamServer) error {
@@ -123,8 +133,10 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 ```
 
 ### レスポンスの送信 & ストリームの終端
+
 クライアントにレスポンスを送信するための方法は、サーバーストリーミングのときと同様に引数`stream`が持つ`Send`メソッドを使います。
 そして、レスポンスの送信をやめてストリームを終端させるためには、こちらもサーバーストリーミングの時と同様に`return`文を呼び出します。
+
 ```go
 // サーバーストリーミングの場合
 func (s *myServer) HelloServerStream(req *hellopb.HelloRequest, stream hellopb.GreetingService_HelloServerStreamServer) error {
@@ -148,18 +160,11 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 }
 ```
 
+# gRPCurl を用いたサーバーサイドの動作確認
 
-
-
-
-
-
-
-
-
-# gRPCurlを用いたサーバーサイドの動作確認
-それでは、この`HelloBiStreams`メソッドの動作確認をgRPCurlでやってみましょう。
+それでは、この`HelloBiStreams`メソッドの動作確認を gRPCurl でやってみましょう。
 サーバー起動を行った後に、以下のようにリクエストを送信します。
+
 ```bash
 $ $ grpcurl -plaintext -d '{"name": "hsaki"}{"name": "a-san"}{"name": "b-san"}{"name": "c-san"}{"name": "d-san"}' localhost:8080 myapp.GreetingService.HelloBiStreams
 {
@@ -178,27 +183,22 @@ $ $ grpcurl -plaintext -d '{"name": "hsaki"}{"name": "a-san"}{"name": "b-san"}{"
   "message": "Hello, d-san!"
 }
 ```
+
 このように、複数リクエストを送信し、それに対する複数個のレスポンスを得ることができました。
 
 :::message
-gRPCurlでは、複数個のリクエストを「1つリクエストを送信→一つレスポンスを受信→もう一つリクエストを送信→……」というように小分けに送ることはできません。
+gRPCurl では、複数個のリクエストを「1 つリクエストを送信 → 一つレスポンスを受信 → もう一つリクエストを送信 →……」というように小分けに送ることはできません。
 複数個のリクエストは上の例のように一度に送信することになります。
 :::
 
-
-
-
-
-
-
-
-
-
 # クライアントコードの実装
+
 今度は`HelloBiStreams`メソッドを呼び出すようなクライアントコードを書いていきましょう。
 
 ## 自動生成されたコード
+
 自動生成された`GreetingService`用のクライアントにも、`HelloBiStreams`メソッドを呼び出すためのメソッドが追加されています。
+
 ```diff go:pkg/grpc/hello_grpc.pb.go
 type GreetingServiceClient interface {
 	// サービスが持つメソッドの定義
@@ -213,6 +213,7 @@ type GreetingServiceClient interface {
 ```
 
 この`HelloBiStreams`メソッドからは`GreetingService_HelloBiStreamsClient`インターフェースを得ることができ、クライアントサイドではこの`Send`メソッド・`Recv`メソッドを使ってサーバーとデータのやり取りを行います。
+
 ```go:pkg/grpc/hello_grpc.pb.go
 type GreetingService_HelloBiStreamsClient interface {
 	Send(*HelloRequest) error
@@ -222,8 +223,10 @@ type GreetingService_HelloBiStreamsClient interface {
 ```
 
 ## クライアントの実装
-クライアントに新しく追加された`HelloBiStream`メソッドを使って、gRPCサーバー上にある`HelloBiStream`メソッドを呼び出す処理を書いていきましょう。
+
+クライアントに新しく追加された`HelloBiStream`メソッドを使って、gRPC サーバー上にある`HelloBiStream`メソッドを呼び出す処理を書いていきましょう。
 ここでは一例として「一つリクエストを送信するごとに、それに対するレスポンスを一つ受け取る」というロジックの実装をしてみます。
+
 ```diff go:cmd/client/main.go
 func main() {
 	// (前略)
@@ -308,10 +311,13 @@ M:
 +	}
 +}
 ```
+
 以下、特筆するべき点について説明します。
 
 ### リクエスト送信処理
+
 サーバーにリクエストを送信するための方法は、クライアントストリーミングのときと同様に引数`stream`が持つ`Send`メソッドを使います。
+
 ```go
 // クライアントストリーミングの場合
 func HelloClientStream() {
@@ -335,8 +341,10 @@ func HelloBiStreams() {
 ```
 
 ### ストリーム終端処理
+
 クライアント側からこれ以上リクエストを送ることがない、というときにはストリームを終端させる処理を行います。
 クライアントストリーミングのときには`CloseAndRecv()`メソッドでこれを行いましたが、双方向ストリーミングの場合には`CloseSend()`メソッドを使用します。
+
 ```go
 // クライアントストリーミングの場合
 func HelloClientStream() {
@@ -358,6 +366,7 @@ func HelloBiStreams() {
 :::message
 `client.HelloBiStreams`から得られるストリームは、`Send`メソッドと`Recv`メソッド以外にも、`grpc.ClientStream`インタフェースが持つメソッドセットも使うことができます。
 `CloseSend`メソッドは、まさに`grpc.ClientStream`インターフェース由来のメソッドです。
+
 ```go:pkg/grpc/hello_grpc.pb.go
 type GreetingService_HelloBiStreamsClient interface {
 	Send(*HelloRequest) error
@@ -365,11 +374,14 @@ type GreetingService_HelloBiStreamsClient interface {
 	grpc.ClientStream // ここにCloseSendメソッドがある
 }
 ```
+
 :::
 
 ### レスポンス受信処理
+
 サーバーからレスポンスを受け取るための方法は、サーバーストリーミングのときと同様に引数`stream`が持つ`Recv`メソッドを使います。
 この際、サーバー側からストリームが終端された場合には、`Recv`メソッドの第一戻り値には`nil`が、第二戻り値には`io.EOF`が格納されています。
+
 ```go
 // サーバーストリーミングの場合
 func HelloServerStream() {
@@ -395,17 +407,10 @@ func HelloBiStreams() {
 }
 ```
 
-
-
-
-
-
-
-
-
-
 # 実装したクライアントの挙動確認
+
 それでは、今作ったクライアントコードの挙動を確認してみます。
+
 ```bash
 $ cd cmd/client
 $ go run main.go
@@ -442,4 +447,5 @@ Hello, d-san!
 please enter >5
 bye.
 ```
-このように、ping-pongのようなリクエスト送信ーレスポンス受信ができれば意図通りです。
+
+このように、ping-pong のようなリクエスト送信ーレスポンス受信ができれば意図通りです。

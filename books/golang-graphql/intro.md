@@ -64,3 +64,7 @@ GraphQLサーバーがリクエストを受け取ってレスポンスを返す�
 - GraphQLのスキーマファイルの読み書きができること
 - GraphQLにリクエストを送るクエリの読み書きができること
 - GitHubに関する基本的な知識を持っていること
+
+## サンプルコード
+本書で開発・使用するサンプルGraphQLサーバーコードは以下のレポジトリに格納されています。
+https://github.com/saki-engineering/graphql-sample

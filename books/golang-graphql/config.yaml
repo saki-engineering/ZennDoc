@@ -1,0 +1,24 @@
+title: "Goで学ぶGraphQLサーバーサイド入門"
+summary: "GraphQLはリクエストクエリを書くことで、必要な分のデータを柔軟に取得することが可能なAPI形式です。
+
+RESTとは違うその仕組みはクライアント目線ではとても便利なものですが、サーバーサイドに立ってみると無限の組み合わせがあるリクエストクエリに一体どう対処しているのか不思議に思う人もいるでしょう。
+
+この本では、Goのgqlgenというライブラリを用いてGraphQLサーバーを作る過程を通して、サーバーサイドGraphQLを理解・開発するのに必要な知識を解説していきたいと思います。"
+topics: ["go", "graphql"]
+published: false
+price: 0 # 有料の場合200〜5000
+# 本に含めるチャプターを順番に並べましょう
+chapters:
+  - intro
+  - tutorial
+  - originalserver
+  - resolverbasic
+  - customscalar
+  - resolveradvanced
+  - dataloader
+  - complexity
+  - middleware
+  - auth
+  - customerr
+  - testing
+  - appendix

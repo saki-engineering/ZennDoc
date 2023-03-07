@@ -198,10 +198,6 @@ select "users"."id","users"."name" from "users" where "id"=?
 このようにN+1問題で大量発行されるクエリというのは、N個全てが別々の検索条件にならないことが多々あります。
 その場合、単純に「全く同じクエリを何回も短期間に実行する」形になり効率が悪いのです。
 
-
-このクエリだと、issuesで取れるノード数分だけ、author.nameを取得するためのselectクエリがDBに向かって発行されてしまうので重い。
-さらに悪い例だと、N個のクエリの内容が全部同じ取得内容なこともある。→ https://gqlgen.com/reference/dataloaders/
-
 ## 解決策 - N個のクエリを`IN`句で1個にまとめる
 N個発行されるクエリは常に
 ```sql
@@ -354,7 +350,7 @@ type Loaders struct {
 func NewLoaders() *Loaders {
 	return &Loaders{
 		// dataloader.Loader[string, *model.User]構造体型をセットするために、
-    // dataloader.NewBatchedLoader関数を呼び出す
+		// dataloader.NewBatchedLoader関数を呼び出す
 		UserLoader: dataloader.NewBatchedLoader[string, *model.User](/*TODO: IN句でデータを取得する関数を引数で渡す*/),
 	}
 }
@@ -385,23 +381,23 @@ type userBatcher struct {
 func (u *userBatcher) BatchGetUsers(ctx context.Context, IDs []string) []*dataloader.Result[*model.User] {
 	// 引数と戻り値のスライスlenは等しくする
 	results := make([]*dataloader.Result[*model.User], len(IDs))
-  for i := range results {
+	for i := range results {
 		results[i] = &dataloader.Result[*model.User]{
 			Error: errors.New("not found"),
 		}
 	}
 
-  // 検索条件であるIDが、引数でもらったIDsスライスの何番目のインデックスに格納されていたのか検索できるようにmap化する
+	// 検索条件であるIDが、引数でもらったIDsスライスの何番目のインデックスに格納されていたのか検索できるようにmap化する
 	indexs := make(map[string]int, len(IDs))
 	for i, ID := range IDs {
 		indexs[ID] = i
 	}
 
-  // サービス層のメソッドを使い、指定されたIDを持つユーザーを全て取得する
-  // (ListUsersByIDメソッド内では、IN句を用いたselect文が実行されている)
+	// サービス層のメソッドを使い、指定されたIDを持つユーザーを全て取得する
+	// (ListUsersByIDメソッド内では、IN句を用いたselect文が実行されている)
 	users, err := u.Srv.ListUsersByID(ctx, IDs)
 
-  // 取得結果を、戻り値resultの中の適切な場所に格納する
+	// 取得結果を、戻り値resultの中の適切な場所に格納する
 	for _, user := range users {
 		var rsl *dataloader.Result[*model.User]
 		if err != nil {
@@ -462,21 +458,21 @@ func (u *userBatcher) BatchGetUsers(ctx context.Context, IDs []string) []*datalo
 	// 引数と戻り値のスライスlenは等しくする
 	results := make([]*dataloader.Result[*model.User], len(IDs))
 
-  // 検索条件であるIDが、引数でもらったIDsスライスの何番目のインデックスに格納されていたのか検索できるようにmap化する
+	// 検索条件であるIDが、引数でもらったIDsスライスの何番目のインデックスに格納されていたのか検索できるようにmap化する
 	indexs := make(map[string]int, len(IDs))
 	for i, ID := range IDs {
 		indexs[ID] = i
 	}
 
-  // サービス層のメソッドを使い、指定されたIDを持つユーザーを全て取得する
+	// サービス層のメソッドを使い、指定されたIDを持つユーザーを全て取得する
 	users, err := u.Srv.ListUsersByID(ctx, IDs)
 
-  // 取得結果を、戻り値resultの中の適切な場所に格納する
+	// 取得結果を、戻り値resultの中の適切な場所に格納する
 	for _, user := range users {
 		var rsl *dataloader.Result[*model.User]
 		// (略: rslに結果を格納)
 
-    // 引数でもらった条件と順序を保ったまま戻り値のスライスを作る
+		// 引数でもらった条件と順序を保ったまま戻り値のスライスを作る
 		results[indexs[user.ID]] = rsl
 	}
 	return results
@@ -509,7 +505,7 @@ type Loaders struct {
 ```go:graph/dataloader.go
 type Loaders struct {
 	UserLoader dataloader.Interface[string, *model.User]
-  RepoLoader dataloader.Interface[string, *model.Repository]
+	RepoLoader dataloader.Interface[string, *model.Repository]
 }
 ```
 

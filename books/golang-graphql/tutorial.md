@@ -363,14 +363,14 @@ $ go run ./server.go
 試しに`todos`クエリを実行してみます。
 ```graphql
 query {
-	todos {
-		id
-		text
-		done
-		user {
-			name
-		}
-	}
+  todos {
+    id
+    text
+    done
+    user {
+      name
+    }
+  }
 }
 ```
 ![](https://storage.googleapis.com/zenn-user-upload/d8f6a30c522d-20230115.png)
@@ -381,18 +381,18 @@ query {
 次に、`createTodo`ミューテーションも同様に実行してみましょう。
 ```graphql
 mutation {
-	createTodo(input: {
-		text: "test-create-todo"
-		userId: "test-user-id"
-	}){
-		id
-		text
-		done
-		user {
-			id
-			name
-		}
-	}
+  createTodo(input: {
+    text: "test-create-todo"
+    userId: "test-user-id"
+  }){
+    id
+    text
+    done
+    user {
+      id
+      name
+    }
+  }
 }
 ```
 ![](https://storage.googleapis.com/zenn-user-upload/9dae239fa85f-20230115.png)

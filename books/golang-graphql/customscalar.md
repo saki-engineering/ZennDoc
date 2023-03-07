@@ -5,13 +5,13 @@ title: "カスタムスカラ型の導入"
 GraphQLクエリで取得するフィールドは全てスカラ型になっている必要があります。
 ```graphql
 query {
-	user(name: "hsaki") {
-		id # ID型(スカラ型)
-		name # 文字列型(スカラ)
-		projectV2(number: 1) {
-			title # 文字列型(スカラ)
-		}
-	}
+  user(name: "hsaki") {
+    id # ID型(スカラ型)
+    name # 文字列型(スカラ)
+    projectV2(number: 1) {
+      title # 文字列型(スカラ)
+    }
+  }
 }
 ```
 

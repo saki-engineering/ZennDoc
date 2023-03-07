@@ -155,7 +155,7 @@ query {
     projectV2(number: 1) {
       title
     }
-	}
+  }
 }
 ```
 
@@ -377,7 +377,7 @@ query {
     projectV2(number: 1) {
       title
     }
-	}
+  }
 }
 ```
 すると、以下のようなエラーが返ってきて、クエリが実行できていないことがわかります。

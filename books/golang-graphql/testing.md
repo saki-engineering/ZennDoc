@@ -173,17 +173,17 @@ Goではテストデータは`testdata`ディレクトリ直下に置くこと�
 ```
 ```TestNodeRepositoryIn.gpl.golden
 query {
-	node(id: "REPO_1") {
-		id
-		... on Repository {
-			name
-			createdAt
-			owner{
-				name
-				id
-			}
-		}
-	}
+  node(id: "REPO_1") {
+    id
+    ... on Repository {
+      name
+      createdAt
+      owner{
+        name
+        id
+      }
+    }
+  }
 }
 ```
 
@@ -402,17 +402,17 @@ $ go test -update
 ```
 ```TestNodeRepositoryOut.json.golden
 {
-	"data": {
-		"node": {
-			"id": "REPO_1",
-			"name": "repo1",
-			"createdAt": "2022-12-30T00:12:21Z",
-			"owner": {
-				"name": "hsaki",
-				"id": "U_1"
-			}
-		}
-	}
+  "data": {
+    "node": {
+      "id": "REPO_1",
+      "name": "repo1",
+      "createdAt": "2022-12-30T00:12:21Z",
+      "owner": {
+        "name": "hsaki",
+        "id": "U_1"
+      }
+    }
+  }
 }
 ```
 

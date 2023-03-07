@@ -83,10 +83,10 @@ type OperationMiddleware func(ctx context.Context, next OperationHandler) Respon
 利用例を以下に示します。
 ```go:server.go
 srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-  log.Println("before OperationHandler")
-  res := next(ctx)
-  defer log.Println("after OperationHandler")
-  return res
+	log.Println("before OperationHandler")
+	res := next(ctx)
+	defer log.Println("after OperationHandler")
+	return res
 })
 ```
 ```bash
@@ -111,10 +111,10 @@ type ResponseMiddleware func(ctx context.Context, next ResponseHandler) *Respons
 利用例を以下に示します。
 ```diff go:server.go
 srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-  log.Println("before OperationHandler")
-  res := next(ctx)
-  defer log.Println("after OperationHandler")
-  return res
+	log.Println("before OperationHandler")
+	res := next(ctx)
+	defer log.Println("after OperationHandler")
+	return res
 })
 +srv.AroundResponses(func(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
 +	log.Println("before ResponseHandler")
@@ -191,19 +191,19 @@ type FieldMiddleware func(ctx context.Context, next Resolver) (res interface{}, 
 利用例を以下に示します。
 ```diff go:server.go
 srv.AroundRootFields(func(ctx context.Context, next graphql.RootResolver) graphql.Marshaler {
-  log.Println("before RootResolver")
-  res := next(ctx)
-  defer func() {
-    var b bytes.Buffer
-    res.MarshalGQL(&b)
-    log.Println("after RootResolver", b.String())
-  }()
-  return res
+	log.Println("before RootResolver")
+	res := next(ctx)
+	defer func() {
+		var b bytes.Buffer
+		res.MarshalGQL(&b)
+		log.Println("after RootResolver", b.String())
+	}()
+	return res
 })
 +srv.AroundFields(func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
-+  res, err = next(ctx)
-+  log.Println(res)
-+  return
++	res, err = next(ctx)
++	log.Println(res)
++	return
 +})
 ```
 
@@ -215,8 +215,8 @@ query {
     ... on ProjectV2 {
       title
       url
-		}
-	}
+    }
+  }
 }
 ```
 
@@ -276,32 +276,32 @@ query {
 
 ```go:server.go
 srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-  log.Println("before OperationHandler")
-  res := next(ctx)
-  defer log.Println("after OperationHandler")
-  return res
+	log.Println("before OperationHandler")
+	res := next(ctx)
+	defer log.Println("after OperationHandler")
+	return res
 })
 srv.AroundResponses(func(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
-  log.Println("before ResponseHandler")
-  res := next(ctx)
-  defer log.Println("after ResponseHandler")
-  return res
+	log.Println("before ResponseHandler")
+	res := next(ctx)
+	defer log.Println("after ResponseHandler")
+	return res
 })
 srv.AroundRootFields(func(ctx context.Context, next graphql.RootResolver) graphql.Marshaler {
-  log.Println("before RootResolver")
-  res := next(ctx)
-  defer func() {
-    var b bytes.Buffer
-    res.MarshalGQL(&b)
-    log.Println("after RootResolver", b.String())
-  }()
-  return res
+	log.Println("before RootResolver")
+	res := next(ctx)
+	defer func() {
+		var b bytes.Buffer
+		res.MarshalGQL(&b)
+		log.Println("after RootResolver", b.String())
+	}()
+	return res
 })
 srv.AroundFields(func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
-  log.Println("before Resolver")
-  res, err = next(ctx)
-  defer log.Println("after Resolver", res)
-  return
+	log.Println("before Resolver")
+	res, err = next(ctx)
+	defer log.Println("after Resolver", res)
+	return
 })
 ```
 ```

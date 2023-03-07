@@ -161,7 +161,7 @@ $ ./setup.sh
 
 ## SQLBoilerのセットアップ
 標準パッケージの`database/sql`を用いてDBにクエリを発行してデータを取得・挿入する処理を愚直に書いても良いのですが、今回は手軽にDBを扱うためにORMツールを使ってみたいと思います。
-Goで使えるORMツールは複数種類ありますが、今回はその中でもSQLBoilerというものを使ってみたいと思います。
+Goで使えるORMツールは複数種類ありますが、今回はその中でも[SQLBoiler](https://github.com/volatiletech/sqlboiler)というものを使ってみたいと思います。
 
 SQLBoilerは事前に用意したDBスキーマからORMコードを自動生成させるタイプのORMツールです。
 DBスキーマがわかった状態からコードを生成しているため、リフレクションのような複雑な型マッピングを用いる必要がなく、結果的に読みやすいコードが生成される印象です。
@@ -186,7 +186,7 @@ add-global-variants=false
 no-tests=true
 
 [sqlite3]
-	dbname = "./mygraphql.db"
+  dbname = "./mygraphql.db"
 ```
 
 今回の設定内容は以下のようになっています。
@@ -561,13 +561,13 @@ GraphQL APIサーバーが動くのと並行して、ローカルホストの808
 Playgroundを開いたら、先ほど実装した`user`クエリを実行するためのリクエストクエリを記述しましょう。
 ```graphql
 query {
-	user(name: "hsaki") {
-		id
-		name
-		projectV2(number: 1) {
-			title
-		}
-	}
+  user(name: "hsaki") {
+    id
+    name
+    projectV2(number: 1) {
+      title
+    }
+  }
 }
 ```
 

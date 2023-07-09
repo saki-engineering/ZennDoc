@@ -3,7 +3,7 @@ title: "DynamoDBはバッチ処理よりストリーム処理との相性が良�
 emoji: "⛅️"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws", "dynamodb"]
-published: false
+published: true
 ---
 # この記事について
 本記事は、筆者が普段AWSの各種サービスを使って感じた感想・気づきをもとに、クラウドアーキの設計やサービスのより良い使い方Tipsを考察するシリーズです。

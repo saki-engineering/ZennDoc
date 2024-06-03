@@ -1,6 +1,6 @@
 ---
 title: "AWSでB/GデプロイやCanaryデプロイができそうな機能をまとめて比較してみた"
-emoji: "😽"
+emoji: "⛅️"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["aws"]
 published: true

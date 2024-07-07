@@ -51,3 +51,15 @@ https://blog.golang.org/context-and-structs
 https://blog.golang.org/pipelines
 
 この記事の中にはcontextは登場しませんが、`Done`メソッドにおける「`chan struct{}`を使ってキャンセル伝播する」という方法の元ネタがここで登場しています。
+
+## ブログ
+### ライブラリとして公開したGoのinterfaceを変更するのは難しいと言う話
+https://blog.syum.ai/entry/2023/01/28/224034
+
+Go1.20リリース時に追加されたCause判定が、なぜ`context.Context`インターフェースに`Cause() error`メソッドを追加するのではなく`context.Cause`関数の追加で対応されたのかという背景についてわかりやすく解説してくださっています。
+端的にいうなら後方互換性の担保のためなのですが、なぜ公開インターフェースへのメソッド追加が互換性を崩してしまうのかはこちらの記事を読めばよくわかります。
+
+### Go1.20リリース連載 contextパッケージのWithCancelCauseとCause 
+https://future-architect.github.io/articles/20230125a/
+
+本文中では触れられなかった、`context.Cause`関数の細かいエッジケースの挙動について触れられていますので必見です。

@@ -17,8 +17,11 @@ chapters:
   - cancelchain
   - deadline
   - err
+  - cause
+  - afterfunc
   - value
   - appliedvalue
+  - nocancel
   - usage
   - pkgdesign
   - internal

@@ -130,44 +130,36 @@ c true  // fuga.GetValueFromFuga(ctx)からの出力
 ```diff go
 +// hoge
 
-+type ctxKey int
-+
-+const (
-+	a ctxKey = iota
-+)
++type ctxKey struct{}
 
 func SetValue(ctx context.Context) context.Context {
 -	return context.WithValue(ctx, "a", "b")
-+	return context.WithValue(ctx, a, "b")
++	return context.WithValue(ctx, ctxKey{}, "b")
 }
 
 func GetValueFromHoge(ctx context.Context) {
 -	val, ok := ctx.Value("a").(string)
-+	val, ok := ctx.Value(a).(string)
++	val, ok := ctx.Value(ctxKey{}).(string)
 	fmt.Println(val, ok)
 }
 ```
 ```diff go
 +// fuga
 
-+type ctxKey int
-+
-+const (
-+	a ctxKey = iota
-+)
++type ctxKey struct{}
 
 func SetValue(ctx context.Context) context.Context {
 -	return context.WithValue(ctx, "a", "c")
-+	return context.WithValue(ctx, a, "c")
++	return context.WithValue(ctx, ctxKey{}, "c")
 }
 
 func GetValueFromFuga(ctx context.Context) {
 -	val, ok := ctx.Value("a").(string)
-+	val, ok := ctx.Value(a).(string)
++	val, ok := ctx.Value(ctxKey{}).(string)
 	fmt.Println(val, ok)
 }
 ```
-`hoge`,`fuga`パッケージ共に`ctxKey`型という非公開型を導入し、それぞれ`ctxKey`型の定数`a`をkeyとしてcontextに値を付与しています。
+`hoge`,`fuga`パッケージ共に`ctxKey`型という非公開型を導入し、それぞれ`ctxKey`型の値をkeyとしてcontextに値を付与しています。
 
 この改修を終えた後に、先ほどと同じ`main`関数を実行したらどうなるでしょうか。
 
@@ -180,43 +172,20 @@ c true  // fuga.GetValueFromFuga(ctx)からの出力
 無事衝突することなく、`hoge.GetValueFromHoge`関数からは`hoge`パッケージで付加されたvalue`"b"`が、`fuga.GetValueFromFuga`関数からは`fuga`パッケージで付加されたvalue`"c"`が確認できました。
 
 これは、contextに付与された値のkeyがそれぞれ
-- `hoge`パッケージ内: `hoge.ctxKey`型の定数`a = itoa`
-- `fuga`パッケージ内: `fuga.ctxKey`型の定数`a = itoa`
+- `hoge`パッケージ内: `hoge.ctxKey`型の値
+- `fuga`パッケージ内: `fuga.ctxKey`型の値
 
 であるからです。
-各パッケージ内で独自の型を作ったことにより、`hoge`と`fuga`パッケージ双方`iota`で同じ見た目の値になったとしても、型が異なるので違う値扱いになり衝突しなくなるのです。
-また、独自型を非公開にすれば、keyの衝突を避けるためには「`hoge`パッケージ内で同じkeyを使ってないか」「`fuga`パッケージ内で同じkeyを使っていないか」というところのみ気にすればいいので、contextが断然扱いやすくなります。
+各パッケージ内で独自の型を作ったことにより、`hoge`と`fuga`パッケージ双方空構造体で同じ見た目の値になったとしても、型が異なるので違う値扱いになり衝突しなくなるのです。
+また、独自型を非公開にすれば、keyの衝突を避けるためには「`hoge`パッケージ内で同じ型のkeyを使ってないか」「`fuga`パッケージ内で同じ型のkeyを使っていないか」というところのみ気にすればいいので、contextが断然扱いやすくなります。
 
-また、同じパッケージ内でのkey衝突に関しても、「keyをまとめて非公開型の定数で用意してから、全て`iota`で値をセット」という方法をとれば簡単に回避可能です。
+また、同じパッケージ内でのkey衝突に関しても、都度空構造体をベースとした異なる型を定義してそれを利用することで簡単に回避可能です。
 
 :::message
 go-staticcheckという静的解析ツールでは、独自非公開型を定義せずにビルトイン型(`int`や`string`のように、Goに元からある型)をkeyにしている`context.WithValue`関数を見つけると、
 `should not use built-in type xxxx as key for value; define your own type to avoid collisions (SA1029)`
 という警告が出るようになっています。
 :::
-
-### (210829追記)
-syumaiさん([@__syumai](https://twitter.com/__syumai))から以下のようなコメントいただきました！
-ありがとうございます！
-
-https://twitter.com/__syumai/status/1431640657311846408
-
-```go
-// ある一定の型の定数でkeyを区別する
-type ctxKet int
-const (
-	a ctxKey = iota
-	b
-)
-
-↓
-
-// そもそもkeyが違えば型も変えてしまう
-type ctxKeyA struct{}
-type ctxKeyB struct{}
-```
-`int`型の`iota`にするよりも、空構造体`struct{}`を採用することで、メモリアロケーションを抑えることができるというメリットがあります。
-
 
 # valueとして与えてもいいデータ・与えるべきでないデータ
 「contextの値として付加するべき値はどのようなものがふさわしいか？」というのは、Goコミュニティの中で盛んに議論されてきたトピックです。

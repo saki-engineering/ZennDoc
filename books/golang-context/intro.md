@@ -34,10 +34,17 @@ contextについてくる`Deadline`メソッドと、`context.WithDeadline`関�
 ### 6章: Errメソッド
 contextについてくる`Err`メソッドの用途について説明します。
 
-### 7章: Valueメソッド
+### 7章: Causeの利用
+Go1.20で`Cause`関数と`WithCancelCause`関数が、Go1.21で`WithDeadlineCause`関数と`WithTimeoutCause`関数が追加されました。
+この章ではこれらCause関連の関数の利用法について説明します。
+
+### 8章: キャンセル・タイムアウト後のクリーンアップ処理
+この章では、Go1.21にて追加された`context.AfterFunc`関数によるキャンセル時の後処理の書き方について解説します。
+
+### 9章: Valueメソッド
 contextについてくる`Value`メソッドと、`context.WithValue()`関数の用途について説明します。
 
-### 8章: Valueメソッドを有効に使うtips
+### 10章: Valueメソッドを有効に使うtips
 contextに与えられるkeyとvalueについて、
 - keyに設定できる値・設定できない値は何か
 - keyの衝突を回避する方法
@@ -45,21 +52,24 @@ contextに与えられるkeyとvalueについて、
 
 ということについて論じます。
 
-### 9章: contextの具体的な使用例
+### 11章: キャンセル・タイムアウトの伝播を切る
+この章では、Go1.21で追加された`WithoutCancel`関数の用途・使い方について説明します。
+
+### 12章: contextの具体的な使用例
 ここでは、今まで紹介したcontextの機能の中でも、
 - タイムアウトを使ったキャンセル処理
 - `Value`メソッドを使った値の伝播
 
 を複合的に使った、ミニhttpサーバーもどきのコードをお見せします。
 
-### 10章: パッケージへのcontext導入について
+### 13章: パッケージへのcontext導入について
 この章では、
 -「contextを構造体のフィールド内に埋め込むのは良くない」という話
 - `context.TODO`関数の使い所
 
 を、既存パッケージへのcontext対応を例に出しながら説明します。
 
-### 11章: contextの内部実体
+### 14章: contextの内部実体
 ここでは、
 - `context.Context`型が「インターフェース」であるということ
 - このインターフェースを満たす具体型は何だ？
@@ -67,8 +77,8 @@ contextに与えられるkeyとvalueについて、
 ということについて軽く触れておきます。
 
 ## 使用する環境・バージョン
-- OS: macOS Catalina 10.15.7
-- go version go1.17 darwin/amd64
+- OS: macOS Ventura 13.3.1
+- go version go1.22.4 darwin/amd64
 
 ## 読者に要求する前提知識
 - Goの基本的な文法の読み書きができること

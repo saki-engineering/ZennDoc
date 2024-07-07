@@ -5,17 +5,13 @@ import (
 	"fmt"
 )
 
-type ctxKey int
-
-const (
-	a ctxKey = iota
-)
+type ctxKey struct{}
 
 func SetValue(ctx context.Context) context.Context {
-	return context.WithValue(ctx, a, "c")
+	return context.WithValue(ctx, ctxKey{}, "c")
 }
 
 func GetValueFromFuga(ctx context.Context) {
-	val, ok := ctx.Value(a).(string)
+	val, ok := ctx.Value(ctxKey{}).(string)
 	fmt.Println(val, ok)
 }

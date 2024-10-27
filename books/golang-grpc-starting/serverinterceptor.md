@@ -147,7 +147,7 @@ func (s *myServerStreamWrapper1) SendMsg(m interface{}) error {
 そのため、単純に前処理・後処理といっても「ストリームopen/closeときの処理」なのか「ストリームから実際にデータを送受信するときの処理」なのかという選択肢が生まれています。
 
 ### ストリームopen/closeに着目した前処理・後処理
-ストリームがリクエスト・レスポンスの送受信に使われる前後に何か処理を挟みたい場合には、Unary RPCのときと同様に、`handler`の前後にやりたい処理を記述することで実現できます。å
+ストリームがリクエスト・レスポンスの送受信に使われる前後に何か処理を挟みたい場合には、Unary RPCのときと同様に、`handler`の前後にやりたい処理を記述することで実現できます。
 ```go
 func myStreamServerInterceptor1(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	// 前処理をここに書く

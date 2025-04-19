@@ -1,0 +1,79 @@
+## Repo Server
+repoServer:
+  # -- Additional containers to be added to the repo server pod
+  ## Ref: https://argo-cd.readthedocs.io/en/stable/user-guide/config-management-plugins/
+  ## Note: Supports use of custom Helm templates
+  extraContainers: 
+    - name: helmfile-plugin
+      command:
+        - /var/run/argocd/argocd-cmp-server
+      image: ghcr.io/helmfile/helmfile:v0.156.0
+      env:
+        - name: HELM_CACHE_HOME
+          value: /tmp/helm/cache
+        - name: HELM_CONFIG_HOME
+          value: /tmp/helm/config
+        - name: HELMFILE_CACHE_HOME
+          value: /tmp/helmfile/cache
+        - name: HELMFILE_TEMPDIR
+          value: /tmp/helmfile/tmp
+        - name: ENV_NAME
+          value: {{ .Environment.Name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        # Register helmfile plugin into sidecar
+        - mountPath: /home/argocd/cmp-server/config/plugins.yaml
+          subPath: plugins.yaml
+          name: argocd-cmp-cm
+        # Starting with v2.4, do NOT mount the same tmp volume as the repo-server container.
+        # The filesystem separation helps mitigate path traversal attacks.
+        - mountPath: /tmp
+          name: helmfile-tmp
+  volumes:
+    - name: argocd-cmp-cm
+      configMap:
+        name: argocd-cmp-cm
+    - name: helmfile-tmp
+      emptyDir: {}
+  serviceAccount:
+    name: argocd-repo-server
+    annotations:
+      iam.amazonaws.com/role: {{ .Values.argoCDRepoServerRoleArn }}
+
+## Argo Configs
+configs:
+  # ConfigMap for Config Management Plugins
+  # Ref: https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/
+  cmp:
+    create: true
+    # -- Plugin yaml files to be added to argocd-cmp-cm
+    plugins:
+      helmfile:
+        allowConcurrency: true
+        discover: 
+          filename: helmfile.yaml
+        parameters:
+          static:
+            - name: name
+              title: Helmfile Release name
+              requred: true
+        generate:
+          command:
+            - bash
+            - "-c"
+            - |
+              if [[ -v ENV_NAME ]]; then
+                helmfile -e $ENV_NAME -l name="$PARAM_NAME" template --include-crds -q
+              elif [[ -v ARGOCD_ENV_ENV_NAME ]]; then
+                helmfile -e $ARGOCD_ENV_ENV_NAME -l name="$PARAM_NAME" template --include-crds -q
+              else
+                helmfile template -l name="$PARAM_NAME" template --include-crds -q
+              fi
+        lockRepo: false
+

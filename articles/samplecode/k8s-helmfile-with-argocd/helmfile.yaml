@@ -1,0 +1,41 @@
+environments: 
+  dev:
+    values:
+      - appDomain: dev.myapp.example.com
+        argoCDRepoServerRoleArn: arn:aws:iam::123456789012:role/argocd-repo-server
+        newRelicLicenseKey: ref+awsssm://newrelic/licensekey?region=ap-northeast-1
+  prd:
+    values:
+      - appDomain: prd.myapp.example.com
+        argoCDRepoServerRoleArn: arn:aws:iam::123456789012:role/argocd-repo-server
+        newRelicLicenseKey: ref+awsssm://newrelic/licensekey?region=ap-northeast-1
+---
+repositories:
+  - name: myapp
+    url: https://myapp.example.com/helm-charts
+  - name: argo
+    url: https://argoproj.github.io/argo-helm
+  - name: newrelic
+    url: https://helm-charts.newrelic.com
+
+releases:
+  - name: myapp
+    namespace: myapp
+    chart: myapp/myapp
+    version: 1.0.0
+    values:
+      - ./myapp/values.yaml.gotmpl
+
+  - name: argocd
+    namespace: argocd
+    chart: argo/argo-cd
+    version: 7.7.16
+    values:
+      - ./argocd/values.yaml.gotmpl
+
+  - name: newrelic-bundle
+    namespace: newrelic
+    chart: newrelic/newrelic-bundle
+    version: 5.0.104
+    values:
+      - ./newrelic/values.yaml.gotmpl

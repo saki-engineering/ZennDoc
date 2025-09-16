@@ -7,7 +7,7 @@ title: "構文解析 - 実例を見てみよう"
 # 具体例 - `slog.Handler`の実装不備検知
 今回は、筆者が過去LT発表した「`slog.Handler`インターフェースを満たすよう作った自作ログハンドラーの実装不備を見つける」解析ツールを具体例として取り上げたいと思います。
 
-TBD: LTスライドのリンクを貼る
+https://speakerdeck.com/sakiengineer/slog-dot-handlernoyokuarushi-zhuang-misu
 
 ## ツールの概要
 `log/slog`パッケージを用いてカスタムロガーを作成する際には、`slog.Handler`インターフェースを満たす自作のハンドラを作る必要があります。

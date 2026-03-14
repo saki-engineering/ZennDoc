@@ -3,7 +3,7 @@ title: "課題ベースで学ぶClaude Code便利機能"
 emoji: "🎮"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["claudecode"]
-published: false
+published: true
 ---
 # この記事について
 「とりあえずClaude Codeを入れてみたけど、なんか使いこなせていない気がする」「あの機能の存在は知っているけど、自分には関係ないと思っていた」という方はいませんか？

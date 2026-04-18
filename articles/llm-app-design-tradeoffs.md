@@ -1,5 +1,5 @@
 ---
-title: "LLMアプリケーションにもCAP定理があるという話"
+title: "LLMアプリケーション設計と向き合う - CAP的トレードオフと可用性管理"
 emoji: "⚖️"
 type: "idea"
 topics: ["llm", "設計", "architecture", "アーキテクチャ"]

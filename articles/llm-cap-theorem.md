@@ -3,8 +3,9 @@ title: "LLMアプリケーションにおける設計Principal - LLMのCAP定理
 emoji: "⚖️"
 type: "idea"
 topics: ["llm", "設計", "architecture", "アーキテクチャ"]
-published: false
+published: true
 ---
+# はじめに
 分散システムを学ぶ人なら一度は「CAP定理」という言葉を耳にしたことがあるでしょう。
 **Consistency(一貫性)・Availability(可用性)・Partition tolerance(分断耐性)の3つを同時に満たすシステムは作れない**という分散システムのよく知られた性質をこの定理は表しています。
 システム設計を行うアーキテクトはどこかでこのトレードオフに直面し、どれを優先しどれを落とすのかを選択する必要に迫られることになります。
